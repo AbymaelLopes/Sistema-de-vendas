@@ -1,12 +1,13 @@
 // Define um nome e uma versão para o cache
-const CACHE_NAME = 'gestao-vendas-cache-v4'; // Versão incrementada para forçar a atualização
+const CACHE_NAME = 'gestao-vendas-cache-v5'; // Versão incrementada para forçar a atualização
 
 // Lista de ficheiros essenciais para a aplicação funcionar offline.
-// Os links CDN foram removidos para evitar erros de CORS no ambiente de desenvolvimento.
 const urlsToCache = [
   '/',
   'index.html',
-  'manifest.json' 
+  'manifest.json',
+  'icon-192.png', // Ícone adicionado ao cache
+  'icon-512.png'  // Ícone adicionado ao cache
 ];
 
 // Evento 'install': é acionado quando o service worker é instalado
@@ -51,7 +52,6 @@ self.addEventListener('fetch', event => {
 
       }).catch(error => {
         console.error("Fetch falhou; retornando offline page se disponível.", error);
-        // Pode adicionar aqui uma página de fallback offline se desejar
       })
   );
 });
