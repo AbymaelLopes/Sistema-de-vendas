@@ -1,21 +1,22 @@
 {
-    "name": "Sistema de Gestão",
-    "short_name": "Gestão",
-    "description": "Aplicação para gerir vendas, estoque e clientes.",
-    "start_url": ".",
-    "display": "standalone",
-    "background_color": "#111827",
-    "theme_color": "#1e40af",
-    "icons": [
-        {
-            "src": "https://placehold.co/192x192/1e40af/ffffff?text=Gestão",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "https://placehold.co/512x512/1e40af/ffffff?text=Gestão",
-            "sizes": "512x512",
-            "type": "image/png"
-        }
-    ]
+  "name": "Sistema de Gestão",
+  "short_name": "Gestão",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "description": "Um aplicativo simples para gestão de vendas, estoque e clientes.",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
 }
+
