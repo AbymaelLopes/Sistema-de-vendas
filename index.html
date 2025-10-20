@@ -94,10 +94,10 @@
                              <div><label class="block text-sm font-medium text-gray-300 mb-1">Nome</label><input type="text" id="product-name" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5" required></div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="block text-sm font-medium text-gray-300 mb-1">Preço Custo (R$)</label><input type="number" id="product-cost-price" step="0.01" min="0" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5" required></div>
-                                <div><label class="block text-sm font-medium text-gray-300 mb-1">Markup (%)</label><input type="number" id="product-markup" min="0" step="0.1" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5" required></div>
+                                <div><label class="block text-sm font-medium text-gray-300 mb-1">Markup (%)</label><input type="number" id="product-markup" min="0" step="0.1" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
-                                <div><label class="block text-sm font-medium text-gray-300 mb-1">Preço Venda (R$)</label><input type="number" id="product-price" step="0.01" min="0" class="w-full bg-gray-600 border border-gray-500 text-gray-300 rounded-lg p-2.5" readonly></div>
+                                <div><label class="block text-sm font-medium text-gray-300 mb-1">Preço Venda (R$)</label><input type="number" id="product-price" step="0.01" min="0" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
                                 <div><label class="block text-sm font-medium text-gray-300 mb-1">Estoque</label><input type="number" id="product-stock" min="0" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5" required></div>
                             </div>
                             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg">Adicionar Produto</button>
@@ -156,10 +156,10 @@
                 <div><label class="block text-sm font-medium text-gray-300 mb-1">Nome do Produto</label><input type="text" id="edit-product-name" class="w-full bg-gray-600 border border-gray-500 text-gray-300 rounded-lg p-2.5 cursor-not-allowed" readonly></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-gray-300 mb-1">Preço Custo (R$)</label><input type="number" id="edit-product-cost-price" step="0.01" min="0" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5" required></div>
-                    <div><label class="block text-sm font-medium text-gray-300 mb-1">Markup (%)</label><input type="number" id="edit-product-markup" min="0" step="0.1" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5" required></div>
+                    <div><label class="block text-sm font-medium text-gray-300 mb-1">Markup (%)</label><input type="number" id="edit-product-markup" min="0" step="0.1" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                     <div><label class="block text-sm font-medium text-gray-300 mb-1">Preço Venda (R$)</label><input type="number" id="edit-product-price" step="0.01" min="0" class="w-full bg-gray-600 border border-gray-500 text-gray-300 rounded-lg p-2.5" readonly></div>
+                     <div><label class="block text-sm font-medium text-gray-300 mb-1">Preço Venda (R$)</label><input type="number" id="edit-product-price" step="0.01" min="0" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
                     <div><label class="block text-sm font-medium text-gray-300 mb-1">Estoque</label><input type="number" id="edit-product-stock" min="0" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5" required></div>
                 </div>
                 <div class="flex space-x-4 mt-6">
@@ -258,19 +258,33 @@
                 const salesByPayment = sales.reduce((acc, sale) => { const method = sale.payment_method || 'Não definido'; acc[method] = (acc[method] || 0) + sale.total; return acc; }, {});
                 renderChart('paymentMethodsChart', 'pie', { labels: Object.keys(salesByPayment), datasets: [{ data: Object.values(salesByPayment), backgroundColor: ['#3b82f6', '#ef4444', '#f97316', '#8b5cf6', '#10b981'] }] });
             };
+            
+            const handlePricingInput = (event) => {
+                const form = event.currentTarget;
+                const costInput = form.querySelector('[id*="cost-price"]');
+                const markupInput = form.querySelector('[id*="markup"]');
+                const priceInput = form.querySelector('[id*="product-price"]');
+                if (!costInput || !markupInput || !priceInput) return;
 
-            const calculateSellPrice = (form) => {
-                const cost = parseFloat(form.querySelector('[id*="cost-price"]').value) || 0;
-                const markup = parseFloat(form.querySelector('[id*="markup"]').value) || 0;
-                const sellPriceField = form.querySelector('[id*="product-price"]');
-                if(cost > 0 && markup > 0) {
-                    sellPriceField.value = (cost * (1 + markup / 100)).toFixed(2);
-                } else {
-                    sellPriceField.value = '';
+                const cost = parseFloat(costInput.value) || 0;
+                let markup = parseFloat(markupInput.value) || 0;
+                let price = parseFloat(priceInput.value) || 0;
+
+                const changedElement = event.target;
+
+                if (changedElement === costInput || changedElement === markupInput) {
+                    if (cost > 0 && markup > 0) {
+                        priceInput.value = (cost * (1 + markup / 100)).toFixed(2);
+                    }
+                } else if (changedElement === priceInput) {
+                    if (cost > 0 && price > cost) {
+                        markupInput.value = (((price / cost) - 1) * 100).toFixed(2);
+                    }
                 }
             };
-            productForm.addEventListener('input', () => calculateSellPrice(productForm));
-            editProductForm.addEventListener('input', () => calculateSellPrice(editProductForm));
+            productForm.addEventListener('input', handlePricingInput);
+            editProductForm.addEventListener('input', handlePricingInput);
+
             inventorySearchInput.addEventListener('input', (e) => renderProducts(products.filter(p => p.name.toLowerCase().includes(e.target.value.toLowerCase()))));
             salesSearchInput.addEventListener('input', (e) => updateProductSelect(products.filter(p => p.name.toLowerCase().includes(e.target.value.toLowerCase()))));
 
