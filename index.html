@@ -94,7 +94,7 @@
                              <div><label class="block text-sm font-medium text-gray-300 mb-1">Nome</label><input type="text" id="product-name" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5" required></div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="block text-sm font-medium text-gray-300 mb-1">Preço Custo (R$)</label><input type="number" id="product-cost-price" step="0.01" min="0" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5" required></div>
-                                <div><label class="block text-sm font-medium text-gray-300 mb-1">Markup (%)</label><input type="number" id="product-markup" min="0" step="0.1" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
+                                <div><label class="block text-sm font-medium text-gray-300 mb-1">Markup (%)</label><input type="number" id="product-markup" min="0" step="0.01" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div><label class="block text-sm font-medium text-gray-300 mb-1">Preço Venda (R$)</label><input type="number" id="product-price" step="0.01" min="0" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
@@ -156,7 +156,7 @@
                 <div><label class="block text-sm font-medium text-gray-300 mb-1">Nome do Produto</label><input type="text" id="edit-product-name" class="w-full bg-gray-600 border border-gray-500 text-gray-300 rounded-lg p-2.5 cursor-not-allowed" readonly></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-gray-300 mb-1">Preço Custo (R$)</label><input type="number" id="edit-product-cost-price" step="0.01" min="0" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5" required></div>
-                    <div><label class="block text-sm font-medium text-gray-300 mb-1">Markup (%)</label><input type="number" id="edit-product-markup" min="0" step="0.1" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
+                    <div><label class="block text-sm font-medium text-gray-300 mb-1">Markup (%)</label><input type="number" id="edit-product-markup" min="0" step="0.01" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                      <div><label class="block text-sm font-medium text-gray-300 mb-1">Preço Venda (R$)</label><input type="number" id="edit-product-price" step="0.01" min="0" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
@@ -258,7 +258,7 @@
                 const salesByPayment = sales.reduce((acc, sale) => { const method = sale.payment_method || 'Não definido'; acc[method] = (acc[method] || 0) + sale.total; return acc; }, {});
                 renderChart('paymentMethodsChart', 'pie', { labels: Object.keys(salesByPayment), datasets: [{ data: Object.values(salesByPayment), backgroundColor: ['#3b82f6', '#ef4444', '#f97316', '#8b5cf6', '#10b981'] }] });
             };
-            
+
             const handlePricingInput = (event) => {
                 const form = event.currentTarget;
                 const costInput = form.querySelector('[id*="cost-price"]');
@@ -267,8 +267,8 @@
                 if (!costInput || !markupInput || !priceInput) return;
 
                 const cost = parseFloat(costInput.value) || 0;
-                let markup = parseFloat(markupInput.value) || 0;
-                let price = parseFloat(priceInput.value) || 0;
+                const markup = parseFloat(markupInput.value) || 0;
+                const price = parseFloat(priceInput.value) || 0;
 
                 const changedElement = event.target;
 
@@ -279,6 +279,8 @@
                 } else if (changedElement === priceInput) {
                     if (cost > 0 && price > cost) {
                         markupInput.value = (((price / cost) - 1) * 100).toFixed(2);
+                    } else {
+                        markupInput.value = '';
                     }
                 }
             };
