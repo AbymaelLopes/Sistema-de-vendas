@@ -9,6 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Biblioteca para gerar imagem do comprovativo -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" xintegrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibjNQVbXlHrrseHIjnullsUgcdcRHERQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -16,14 +18,19 @@
         .tab-button { transition: background-color 0.3s, color 0.3s; }
         #loading-overlay { z-index: 100; transition: opacity 0.3s; }
         .chart-container { position: relative; height: 350px; width: 100%; }
-        /* Oculta as setas do input number */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
           -webkit-appearance: none; 
           margin: 0; 
         }
-        input[type=number] {
-          -moz-appearance: textfield;
+        input[type=number] { -moz-appearance: textfield; }
+        /* Estilos para o comprovativo gerado */
+        #receipt-content {
+            width: 320px; /* Largura de um comprovativo de mini-impressora */
+            background: #ffffff;
+            color: #000000;
+            padding: 16px;
+            font-family: 'Courier New', Courier, monospace;
         }
     </style>
 </head>
@@ -146,8 +153,10 @@
         </main>
     </div>
     
-    <!-- Modal e Notificações -->
+    <!-- Modal Notificação -->
     <div id="notification" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform -translate-y-5 transition-all duration-300 z-50"></div>
+    
+    <!-- Modal Editar Produto -->
     <div id="edit-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 opacity-0 z-50 transition-opacity">
         <div class="card w-full max-w-md">
             <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-semibold text-white">Editar Produto</h2><button id="close-modal-btn" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button></div>
@@ -169,9 +178,44 @@
             </form>
         </div>
     </div>
+    
+    <!-- Modal Editar Cliente (NOVO) -->
+    <div id="edit-customer-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 opacity-0 z-50 transition-opacity">
+        <div class="card w-full max-w-md">
+            <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-semibold text-white">Editar Cliente</h2><button id="close-edit-customer-modal-btn" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button></div>
+            <form id="edit-customer-form" class="space-y-4">
+                <input type="hidden" id="edit-customer-id">
+                <div><label class="block text-sm font-medium text-gray-300 mb-1">Nome</label><input type="text" id="edit-customer-name" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5" required></div>
+                <div><label class="block text-sm font-medium text-gray-300 mb-1">Telefone</label><input type="tel" id="edit-customer-phone" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
+                <div><label class="block text-sm font-medium text-gray-300 mb-1">E-mail</label><input type="email" id="edit-customer-email" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-2.5"></div>
+                <div class="flex space-x-4 mt-6">
+                    <button type="button" id="cancel-edit-customer-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2.5 px-4 rounded-lg">Cancelar</button>
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg">Guardar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal Comprovativo (NOVO) -->
+    <div id="receipt-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 opacity-0 z-50 transition-opacity">
+        <div class="card w-full max-w-sm">
+             <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-white">Comprovativo Gerado</h2>
+                <button id="close-receipt-modal-btn" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            <!-- Onde a imagem do comprovativo vai aparecer -->
+            <div id="receipt-image-container" class="mb-4 border border-gray-600 rounded-lg overflow-hidden">
+                <!-- Imagem gerada pelo html2canvas -->
+            </div>
+            <!-- Template escondido para o html2canvas gerar a imagem -->
+            <div id="receipt-content" class="absolute -left-[9999px]">
+                <!-- O conteúdo do comprovativo será injetado aqui -->
+            </div>
+            <button id="share-receipt-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg">Partilhar / Descarregar</button>
+        </div>
+    </div>
 
     <script type="module">
-        // 1. Cole a sua URL e Chave Anon aqui. Encontre-as nas Definições do seu projeto Supabase > API.
         const SUPABASE_URL = 'https://btoraecgmldfabvvkbas.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0b3JhZWNnbWxkZmFidnZrYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTUxMDYsImV4cCI6MjA3NjQ3MTEwNn0.SOVkTldBRXYFTlm-4lZfNjhgxDXD86x97U_xwch3L04';
         
@@ -186,6 +230,7 @@
         }
         
         async function main(supabase) {
+            // --- DOM Elements ---
             const salesTab = document.getElementById('sales-tab'), inventoryTab = document.getElementById('inventory-tab'), customersTab = document.getElementById('customers-tab'), reportsTab = document.getElementById('reports-tab');
             const salesView = document.getElementById('sales-view'), inventoryView = document.getElementById('inventory-view'), customersView = document.getElementById('customers-view'), reportsView = document.getElementById('reports-view');
             const productForm = document.getElementById('product-form'), productNameInput = document.getElementById('product-name'), productPriceInput = document.getElementById('product-price'), productStockInput = document.getElementById('product-stock'), productCostPriceInput = document.getElementById('product-cost-price'), productMarkupInput = document.getElementById('product-markup'), productList = document.getElementById('product-list');
@@ -196,6 +241,10 @@
             const totalProfitEl = document.getElementById('total-profit'), totalRevenueEl = document.getElementById('total-revenue'), totalSalesEl = document.getElementById('total-sales'), averageTicketEl = document.getElementById('average-ticket'), totalProductsStockEl = document.getElementById('total-products-stock');
             const inventorySearchInput = document.getElementById('inventory-search');
             const salesSearchInput = document.getElementById('sales-search');
+            // Novos elementos (Editar Cliente)
+            const editCustomerModal = document.getElementById('edit-customer-modal'), editCustomerForm = document.getElementById('edit-customer-form'), editCustomerId = document.getElementById('edit-customer-id'), editCustomerName = document.getElementById('edit-customer-name'), editCustomerPhone = document.getElementById('edit-customer-phone'), editCustomerEmail = document.getElementById('edit-customer-email'), closeEditCustomerModalBtn = document.getElementById('close-edit-customer-modal-btn'), cancelEditCustomerBtn = document.getElementById('cancel-edit-customer-btn');
+            // Novos elementos (Comprovativo)
+            const receiptModal = document.getElementById('receipt-modal'), receiptImageContainer = document.getElementById('receipt-image-container'), receiptContent = document.getElementById('receipt-content'), shareReceiptBtn = document.getElementById('share-receipt-btn'), closeReceiptModalBtn = document.getElementById('close-receipt-modal-btn');
 
             let products = [], customers = [], sales = [], currentCart = [], chartInstances = {};
 
@@ -229,9 +278,9 @@
             function renderAll() { renderProducts(); renderCustomers(); renderSalesHistory(); renderCart(); updateProductSelect(); updateCustomerSelect(); }
             
             const renderProducts = (filteredProducts = products) => { productList.innerHTML = filteredProducts.length ? filteredProducts.map(p => `<div class="flex justify-between items-center bg-gray-700 p-3 rounded-lg"><div><p class="font-semibold text-white">${p.name}</p><p class="text-sm text-gray-400">Venda: R$ ${p.price.toFixed(2)} | Custo: R$ ${p.cost_price ? p.cost_price.toFixed(2) : 'N/A'} | Estoque: ${p.stock}</p></div><div class="flex items-center space-x-2"><button data-id="${p.id}" class="edit-product-btn text-blue-400 hover:text-blue-600 p-1"><svg fill="currentColor" width="20" height="20" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V12h2.293z"/></svg></button><button data-id="${p.id}" class="delete-product-btn text-red-400 hover:text-red-600 p-1"><svg fill="currentColor" width="20" height="20" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3V2h11v1z"/></svg></button></div></div>`).join('') : '<p class="text-gray-500">Nenhum produto encontrado.</p>'; };
-            const renderCustomers = () => { customerList.innerHTML = customers.length ? customers.map(c => `<div class="flex justify-between items-start bg-gray-700 p-3 rounded-lg"><div><p class="font-semibold text-white">${c.name}</p><p class="text-sm text-gray-400">${c.phone || ''} ${c.email || ''}</p></div><button data-id="${c.id}" class="delete-customer-btn text-red-400 hover:text-red-600 p-1"><svg fill="currentColor" width="20" height="20" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3V2h11v1z"/></svg></button></div>`).join('') : '<p class="text-gray-500">Nenhum cliente registado.</p>'; };
+            const renderCustomers = () => { customerList.innerHTML = customers.length ? customers.map(c => `<div class="flex justify-between items-start bg-gray-700 p-3 rounded-lg"><div><p class="font-semibold text-white">${c.name}</p><p class="text-sm text-gray-400">${c.phone || ''} ${c.email || ''}</p></div><div class="flex items-center space-x-2"><button data-id="${c.id}" class="edit-customer-btn text-blue-400 hover:text-blue-600 p-1"><svg fill="currentColor" width="20" height="20" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V12h2.293z"/></svg></button><button data-id="${c.id}" class="delete-customer-btn text-red-400 hover:text-red-600 p-1"><svg fill="currentColor" width="20" height="20" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3V2h11v1z"/></svg></button></div></div>`).join('') : '<p class="text-gray-500">Nenhum cliente registado.</p>'; };
             const renderSalesHistory = () => { salesHistory.innerHTML = sales.length ? sales.map(s => { const d = new Date(s.created_at); return `<div class="bg-gray-700 p-3 rounded-lg"><div class="flex justify-between"><div><p class="font-bold">Cliente: ${s.customers ? s.customers.name : 'Avulso'}</p><p class="text-sm text-gray-400">${d.toLocaleDateString()} ${d.toLocaleTimeString()}</p><p class="text-sm">Pagamento: ${s.payment_method}</p></div><p class="font-bold text-lg text-green-400">R$ ${s.total.toFixed(2)}</p></div><ul class="text-sm list-disc list-inside mt-2">${s.items.map(i => `<li>${i.quantity}x ${i.name} ${i.discount > 0 ? `(R$ ${i.discount.toFixed(2)} off)` : ''}</li>`).join('')}</ul></div>`; }).join('') : '<p class="text-gray-500">Nenhuma venda registada.</p>'; };
-            const renderCart = () => { const total = currentCart.reduce((s, i) => s + (i.price * i.quantity) - i.discount, 0); saleTotal.textContent = `R$ ${total.toFixed(2)}`; registerSaleBtn.disabled = !currentCart.length; currentSaleItems.innerHTML = currentCart.length ? currentCart.map(i => `<div class="flex justify-between p-2 bg-gray-700/50 rounded"><span>${i.quantity}x ${i.name} ${i.discount > 0 ? `(R$ ${i.discount.toFixed(2)} off)`: ''}</span><span>R$ ${((i.price * i.quantity) - i.discount).toFixed(2)}</span></div>`).join('') : '<p class="text-gray-500">Carrinho vazio.</p>'; };
+            const renderCart = () => { const total = currentCart.reduce((s, i) => s + (i.price * i.quantity) - i.discount, 0); saleTotal.textContent = `R$ ${total.toFixed(2)}`; registerSaleBtn.disabled = !currentCart.length; currentSaleItems.innerHTML = currentCart.length ? currentCart.map((i, index) => `<div class="flex justify-between items-center p-2 bg-gray-700/50 rounded"><span>${i.quantity}x ${i.name} ${i.discount > 0 ? `(R$ ${i.discount.toFixed(2)} off)`: ''}</span><div class="flex items-center space-x-2"><span>R$ ${((i.price * i.quantity) - i.discount).toFixed(2)}</span><button data-index="${index}" class="remove-from-cart-btn text-red-400 hover:text-red-300 font-bold">&times;</button></div></div>`).join('') : '<p class="text-gray-500">Carrinho vazio.</p>'; };
             const updateProductSelect = (filteredProducts = products) => { saleProductSelect.innerHTML = filteredProducts.filter(p => p.stock > 0).map(p => `<option value="${p.id}">${p.name} (Estoque: ${p.stock})</option>`).join(''); };
             const updateCustomerSelect = () => { saleCustomerSelect.innerHTML = '<option value="">Cliente Avulso</option>' + customers.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); };
             
@@ -259,6 +308,20 @@
                 renderChart('paymentMethodsChart', 'pie', { labels: Object.keys(salesByPayment), datasets: [{ data: Object.values(salesByPayment), backgroundColor: ['#3b82f6', '#ef4444', '#f97316', '#8b5cf6', '#10b981'] }] });
             };
 
+            const renderChart = (canvasId, type, data, options = {}) => {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+                const defaultOptions = {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#d1d5db' } } },
+                    scales: (type === 'bar') ? {
+                        y: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                        x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }
+                    } : {}
+                };
+                chartInstances[canvasId] = new Chart(ctx, { type, data, options: { ...defaultOptions, ...options } });
+            };
+
             const handlePricingInput = (event) => {
                 const form = event.currentTarget;
                 const costInput = form.querySelector('[id*="cost-price"]');
@@ -269,50 +332,142 @@
                 const cost = parseFloat(costInput.value) || 0;
                 const markup = parseFloat(markupInput.value) || 0;
                 const price = parseFloat(priceInput.value) || 0;
-
                 const changedElement = event.target;
 
                 if (changedElement === costInput || changedElement === markupInput) {
-                    if (cost > 0 && markup > 0) {
-                        priceInput.value = (cost * (1 + markup / 100)).toFixed(2);
-                    }
+                    if (cost > 0 && markup > 0) priceInput.value = (cost * (1 + markup / 100)).toFixed(2);
                 } else if (changedElement === priceInput) {
-                    if (cost > 0 && price > cost) {
-                        markupInput.value = (((price / cost) - 1) * 100).toFixed(2);
-                    } else {
-                        markupInput.value = '';
-                    }
+                    if (cost > 0 && price > cost) markupInput.value = (((price / cost) - 1) * 100).toFixed(2);
+                    else markupInput.value = '';
                 }
             };
             productForm.addEventListener('input', handlePricingInput);
             editProductForm.addEventListener('input', handlePricingInput);
-
             inventorySearchInput.addEventListener('input', (e) => renderProducts(products.filter(p => p.name.toLowerCase().includes(e.target.value.toLowerCase()))));
             salesSearchInput.addEventListener('input', (e) => updateProductSelect(products.filter(p => p.name.toLowerCase().includes(e.target.value.toLowerCase()))));
 
+            // --- Lógica de CRUD ---
             productForm.addEventListener('submit', async e => { e.preventDefault(); const { error } = await supabase.from('products').insert({ name: productNameInput.value, price: productPriceInput.value, stock: productStockInput.value, cost_price: productCostPriceInput.value, markup: productMarkupInput.value }); if (error) { showNotification('Erro ao adicionar produto', true); console.error(error); } else { showNotification('Produto adicionado!'); productForm.reset(); await fetchData(); } });
             customerForm.addEventListener('submit', async e => { e.preventDefault(); const { error } = await supabase.from('customers').insert({ name: customerNameInput.value, phone: customerPhoneInput.value, email: customerEmailInput.value }); if (error) { showNotification('Erro ao adicionar cliente', true); } else { showNotification('Cliente adicionado!'); customerForm.reset(); await fetchData(); } });
-            document.body.addEventListener('click', async e => { const delProdBtn = e.target.closest('.delete-product-btn'); if (delProdBtn) { const id = delProdBtn.dataset.id; if (confirm('Tem a certeza?')) { await supabase.from('products').delete().eq('id', id); await fetchData(); } } const delCustBtn = e.target.closest('.delete-customer-btn'); if (delCustBtn) { const id = delCustBtn.dataset.id; if (confirm('Tem a certeza?')) { await supabase.from('customers').delete().eq('id', id); await fetchData(); } } const editProdBtn = e.target.closest('.edit-product-btn'); if (editProdBtn) { const id = editProdBtn.dataset.id; const product = products.find(p => p.id == id); if(product){ editProductForm.querySelector('#edit-product-id').value = product.id; editProductForm.querySelector('#edit-product-name').value = product.name; editProductForm.querySelector('#edit-product-price').value = product.price; editProductForm.querySelector('#edit-product-stock').value = product.stock; editProductForm.querySelector('#edit-product-cost-price').value = product.cost_price; editProductForm.querySelector('#edit-product-markup').value = product.markup; editModal.classList.remove('hidden', 'opacity-0'); } } });
+            
+            document.body.addEventListener('click', async e => { 
+                const delProdBtn = e.target.closest('.delete-product-btn'); if (delProdBtn) { const id = delProdBtn.dataset.id; if (confirm('Tem a certeza?')) { await supabase.from('products').delete().eq('id', id); await fetchData(); } } 
+                const delCustBtn = e.target.closest('.delete-customer-btn'); if (delCustBtn) { const id = delCustBtn.dataset.id; if (confirm('Tem a certeza?')) { await supabase.from('customers').delete().eq('id', id); await fetchData(); } } 
+                const editProdBtn = e.target.closest('.edit-product-btn'); if (editProdBtn) { const id = editProdBtn.dataset.id; const product = products.find(p => p.id == id); if(product){ editProductForm.querySelector('#edit-product-id').value = product.id; editProductForm.querySelector('#edit-product-name').value = product.name; editProductForm.querySelector('#edit-product-price').value = product.price; editProductForm.querySelector('#edit-product-stock').value = product.stock; editProductForm.querySelector('#edit-product-cost-price').value = product.cost_price; editProductForm.querySelector('#edit-product-markup').value = product.markup; editModal.classList.remove('hidden', 'opacity-0'); } }
+                // NOVO: Editar Cliente
+                const editCustBtn = e.target.closest('.edit-customer-btn'); if (editCustBtn) { const id = editCustBtn.dataset.id; const customer = customers.find(c => c.id == id); if(customer){ editCustomerId.value = customer.id; editCustomerName.value = customer.name; editCustomerPhone.value = customer.phone; editCustomerEmail.value = customer.email; editCustomerModal.classList.remove('hidden', 'opacity-0'); } }
+                // NOVO: Remover do Carrinho
+                const removeCartBtn = e.target.closest('.remove-from-cart-btn'); if (removeCartBtn) { const index = removeCartBtn.dataset.index; currentCart.splice(index, 1); renderCart(); }
+            });
+
             addToCartBtn.addEventListener('click', () => { const p = products.find(p => p.id == saleProductSelect.value); const qty = parseInt(saleQuantityInput.value); const discount = parseFloat(saleDiscountInput.value) || 0; if (!p || qty < 1 || qty > p.stock || discount > p.price * qty) return showNotification('Verifique os dados. O desconto não pode ser maior que o total.', true); const existing = currentCart.find(i => i.id === p.id); if (existing) { existing.quantity += qty; existing.discount += discount; } else { currentCart.push({ ...p, quantity: qty, discount: discount }); } renderCart(); saleDiscountInput.value = ''; });
+            
             registerSaleBtn.addEventListener('click', async () => {
                 const saleData = { customer_id: saleCustomerSelect.value || null, total: currentCart.reduce((s, i) => s + (i.price * i.quantity) - i.discount, 0), payment_method: salePaymentMethodSelect.value, items: currentCart.map(({ id, name, price, quantity, discount, cost_price }) => ({ id, name, price, quantity, discount, cost_price })) };
-                const { error: saleError } = await supabase.from('sales').insert(saleData);
+                // Salva a venda e pede ao Supabase para retornar o registo completo
+                const { data: newSale, error: saleError } = await supabase.from('sales').insert(saleData).select('*, customers(name)').single();
+                
                 if (saleError) return showNotification('Erro ao registar venda.', true);
+                
                 for (const item of currentCart) { await supabase.from('products').update({ stock: item.stock - item.quantity }).eq('id', item.id); }
+                
                 currentCart = [];
                 showNotification('Venda registada com sucesso!');
-                await fetchData();
+                await fetchData(); // Atualiza todas as listas
+                
+                // NOVO: Gera e mostra o comprovativo
+                generateAndShowReceipt(newSale);
             });
+            
             editProductForm.addEventListener('submit', async e => { e.preventDefault(); const id = editProductForm.querySelector('#edit-product-id').value; const { error } = await supabase.from('products').update({ price: editProductForm.querySelector('#edit-product-price').value, stock: editProductForm.querySelector('#edit-product-stock').value, cost_price: editProductForm.querySelector('#edit-product-cost-price').value, markup: editProductForm.querySelector('#edit-product-markup').value }).eq('id', id); if (error) { showNotification('Erro ao atualizar produto.', true); } else { showNotification('Produto atualizado!'); editModal.classList.add('hidden', 'opacity-0'); await fetchData(); } });
             closeModalBtn.addEventListener('click', () => editModal.classList.add('hidden', 'opacity-0'));
             cancelEditBtn.addEventListener('click', () => editModal.classList.add('hidden', 'opacity-0'));
 
+            // NOVO: Eventos do Modal Editar Cliente
+            editCustomerForm.addEventListener('submit', async e => { e.preventDefault(); const id = editCustomerId.value; const { error } = await supabase.from('customers').update({ name: editCustomerName.value, phone: editCustomerPhone.value, email: editCustomerEmail.value }).eq('id', id); if (error) { showNotification('Erro ao atualizar cliente.', true); } else { showNotification('Cliente atualizado!'); editCustomerModal.classList.add('hidden', 'opacity-0'); await fetchData(); } });
+            closeEditCustomerModalBtn.addEventListener('click', () => editCustomerModal.classList.add('hidden', 'opacity-0'));
+            cancelEditCustomerBtn.addEventListener('click', () => editCustomerModal.classList.add('hidden', 'opacity-0'));
+            closeReceiptModalBtn.addEventListener('click', () => receiptModal.classList.add('hidden', 'opacity-0'));
+
+            // --- Lógica de Geração de Comprovativo (NOVO) ---
+            function dataURLtoBlob(dataURL) {
+                const parts = dataURL.split(';base64,');
+                const contentType = parts[0].split(':')[1];
+                const raw = window.atob(parts[1]);
+                const rawLength = raw.length;
+                const uInt8Array = new Uint8Array(rawLength);
+                for (let i = 0; i < rawLength; ++i) uInt8Array[i] = raw.charCodeAt(i);
+                return new Blob([uInt8Array], { type: contentType });
+            }
+
+            async function generateAndShowReceipt(saleData) {
+                receiptContent.innerHTML = `
+                    <div class="p-4 bg-white text-black text-xs" style="width: 320px; font-family: 'Courier New', Courier, monospace;">
+                        <img src="icon-192.png" alt="Logo" class="w-20 h-20 mx-auto" id="receipt-logo">
+                        <h3 class="text-center text-lg font-bold my-2">Comprovativo de Venda</h3>
+                        <p>Data: ${new Date(saleData.created_at).toLocaleString('pt-BR')}</p>
+                        <p>Cliente: ${saleData.customers ? saleData.customers.name : 'Cliente Avulso'}</p>
+                        <p>Pagamento: ${saleData.payment_method}</p>
+                        <hr class="my-2" style="border-color: #000;">
+                        <ul>
+                            ${saleData.items.map(i => `
+                                <li class="flex justify-between">
+                                    <span>${i.quantity}x ${i.name}</span>
+                                    <span>R$ ${i.price.toFixed(2)}</span>
+                                </li>
+                                ${i.discount > 0 ? `
+                                <li class="flex justify-end text-red-600">
+                                    <span>Desconto: -R$ ${i.discount.toFixed(2)}</span>
+                                </li>` : ''}
+                            `).join('')}
+                        </ul>
+                        <hr class="my-2" style="border-color: #000;">
+                        <p class="text-right font-bold text-base">Total: R$ ${saleData.total.toFixed(2)}</p>
+                    </div>
+                `;
+
+                try {
+                    const canvas = await html2canvas(receiptContent, { scale: 2 });
+                    const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                    
+                    receiptImageContainer.innerHTML = `<img src="${jpgDataUrl}" alt="Comprovativo" class="w-full">`;
+                    receiptModal.classList.remove('hidden', 'opacity-0');
+                    
+                    shareReceiptBtn.onclick = async () => {
+                        try {
+                            const blob = dataURLtoBlob(jpgDataUrl);
+                            const file = new File([blob], 'comprovante.jpg', { type: 'image/jpeg' });
+                            if (navigator.share && navigator.canShare({ files: [file] })) {
+                                await navigator.share({
+                                    files: [file],
+                                    title: 'Comprovativo de Venda',
+                                    text: 'Segue o comprovativo da sua compra.'
+                                });
+                            } else {
+                                const a = document.createElement('a');
+                                a.href = jpgDataUrl;
+                                a.download = 'comprovante.jpg';
+                                a.click();
+                            }
+                        } catch (err) {
+                            showNotification("Erro ao partilhar. A descarregar...", true);
+                            const a = document.createElement('a'); a.href = jpgDataUrl; a.download = 'comprovante.jpg'; a.click();
+                        }
+                    };
+                } catch (err) {
+                    console.error("Erro ao gerar comprovativo:", err);
+                    showNotification("Erro ao gerar imagem do comprovativo.", true);
+                }
+            }
+
+            // --- Navegação ---
             const setActiveTab = (btn, view) => { [salesTab, inventoryTab, customersTab, reportsTab].forEach(t => t.classList.remove('bg-blue-600', 'text-white')); [salesView, inventoryView, customersView, reportsView].forEach(v => v.classList.add('hidden')); btn.classList.add('bg-blue-600', 'text-white'); view.classList.remove('hidden'); if(view === reportsView) renderReports(); };
             salesTab.addEventListener('click', () => setActiveTab(salesTab, salesView));
             inventoryTab.addEventListener('click', () => setActiveTab(inventoryTab, inventoryView));
             customersTab.addEventListener('click', () => setActiveTab(customersTab, customersView));
             reportsTab.addEventListener('click', () => setActiveTab(reportsTab, reportsView));
 
+            // --- Inicialização ---
             await fetchData();
             setActiveTab(salesTab, salesView);
         }
