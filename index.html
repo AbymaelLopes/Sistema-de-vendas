@@ -47,7 +47,7 @@
                 <button onclick="showTab('inventory')" id="tab-inventory" class="tab-button px-5 py-2 rounded-xl font-bold text-sm">Estoque</button>
                 <button onclick="showTab('customers')" id="tab-customers" class="tab-button px-5 py-2 rounded-xl font-bold text-sm">Clientes</button>
                 <button onclick="showTab('finance')" id="tab-finance" class="tab-button px-5 py-2 rounded-xl font-bold text-sm flex items-center">
-                    Financeiro <span id="debt-badge" class="ml-2 hidden bg-red-600 text-[10px] px-2 py-0.5 rounded-full">0</span>
+                    Financeiro <span id="debt-badge" class="ml-2 hidden bg-red-600 text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
                 </button>
                 <button onclick="showTab('reports')" id="tab-reports" class="tab-button px-5 py-2 rounded-xl font-bold text-sm">Relatórios</button>
             </div>
@@ -318,26 +318,48 @@
             if (method === 'prazo' && !cid) { uiNotify("Venda a prazo exige Cliente!", true); return; }
 
             uiLoading(true);
+            
+            // Garantir que o ID do cliente seja numérico ou nulo
+            const customerId = cid ? parseInt(cid) : null;
+
             const { data: newSale, error } = await supabaseClient.from('sales').insert({
-                customer_id: cid || null,
+                customer_id: customerId,
                 total: total,
                 payment_method: method,
                 items: state.cart
             }).select('*, customers(name)').single();
 
-            if (error) { uiNotify("Erro ao processar venda", true); uiLoading(false); return; }
-
-            if (method === 'prazo') {
-                await supabaseClient.from('accounts_receivable').insert({ sale_id: newSale.id, customer_id: cid, total_amount: total });
+            if (error) { 
+                uiNotify("Erro ao processar venda", true); 
+                console.error(error);
+                uiLoading(false); 
+                return; 
             }
 
+            // Se for venda a prazo, cria o registro na tabela financeira
+            if (method === 'prazo') {
+                const { error: financeError } = await supabaseClient.from('accounts_receivable').insert({ 
+                    sale_id: newSale.id, 
+                    customer_id: customerId, 
+                    total_amount: total,
+                    paid_amount: 0,
+                    status: 'pendente' 
+                });
+                
+                if (financeError) {
+                    uiNotify("Venda salva, mas falha ao gerar débito financeiro.", true);
+                    console.error("Erro Financeiro:", financeError);
+                }
+            }
+
+            // Baixa no estoque
             for (const item of state.cart) {
                 await supabaseClient.from('products').update({ stock: item.stock - item.quantity }).eq('id', item.id);
             }
 
             state.cart = [];
             renderCart();
-            await sync();
+            await sync(); // Atualiza tudo (vendas e financeiro)
             generateReceiptImg(newSale);
         };
 
@@ -370,6 +392,7 @@
             uiLoading(true);
             const { error } = id ? await supabaseClient.from('products').update(data).eq('id', id) : await supabaseClient.from('products').insert(data);
             if (!error) { e.target.reset(); document.getElementById('p-id').value = ''; document.getElementById('btn-cancel-prod').classList.add('hidden'); await sync(); uiNotify("Salvo!"); }
+            uiLoading(false);
         };
 
         window.editProduct = (id) => {
