@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geral Gestão - Sistema Integrado</title>
+    <title>Gestão - Sistema Integrado</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#111827"/>
     <!-- Bibliotecas -->
@@ -38,8 +38,8 @@
 
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
         <header class="text-center mb-8">
-            <h1 class="text-3xl font-black text-white tracking-tighter uppercase italic">GERAL GESTÃO</h1>
-            <p class="text-blue-400 text-xs font-bold uppercase tracking-widest mt-1">Controlo de Vendas e Financeiro</p>
+            <h1 class="text-3xl font-black text-white tracking-tighter uppercase italic">GESTÃO</h1>
+            <p class="text-blue-400 text-xs font-bold uppercase tracking-widest mt-1">Controle de Vendas e Financeiro</p>
         </header>
 
         <!-- Menu Superior -->
@@ -190,7 +190,7 @@
         <div class="max-w-sm w-full text-center">
             <div id="receipt-img-box" class="border-4 border-gray-800 rounded-2xl mb-8 overflow-hidden bg-white shadow-2xl"></div>
             <div class="flex flex-col gap-3">
-                <button id="btn-receipt-share" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-black text-sm uppercase">Partilhar Recibo</button>
+                <button id="btn-receipt-share" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-black text-sm uppercase">Compartilhar Recibo</button>
                 <button onclick="closeReceiptModal()" class="w-full bg-white/10 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest">Fechar</button>
             </div>
         </div>
@@ -291,7 +291,7 @@
                     <div class="text-sm font-bold text-white uppercase tracking-tighter">${i.quantity}x ${i.name}</div>
                     <div class="flex gap-4 items-center">
                         <span class="text-green-400 font-black">R$ ${((i.price * i.quantity) - i.discount).toFixed(2)}</span>
-                        <button onclick="removeFromCart(${idx})" class="text-gray-600 hover:text-red-500 transition font-black">✖</button>
+                        <button onclick="removeFromCart(${idx})" class="text-gray-500 hover:text-red-500 transition font-black">✖</button>
                     </div>
                 </div>
             `).join('') || '<div class="text-center py-6 text-gray-700 font-bold uppercase text-[10px]">Carrinho Vazio</div>';
@@ -330,7 +330,7 @@
                 await sync();
                 ui.notify("✅ Venda Finalizada!");
                 generateReceiptImg(newSale);
-            } catch(e) { uiNotify("Erro ao finalizar", true); }
+            } catch(e) { ui.notify("Erro ao finalizar", true); }
             uiLoading(false);
         };
 
@@ -397,10 +397,10 @@
         function renderInventory() {
             const term = document.getElementById('inv-search').value.toLowerCase();
             document.getElementById('inv-list').innerHTML = state.products.filter(p => p.name.toLowerCase().includes(term)).map(p => `
-                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 flex justify-between items-center group transition">
+                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 flex justify-between items-center group transition shadow-lg">
                     <div>
                         <p class="font-black text-white group-hover:text-blue-400 uppercase italic transition tracking-tighter">${p.name}</p>
-                        <p class="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-widest">STOCK: <span class="${p.stock < 5 ? 'text-red-500' : 'text-gray-300'}">${p.stock}</span> | Custo: R$ ${p.cost_price?.toFixed(2)}</p>
+                        <p class="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-widest">ESTOQUE: <span class="${p.stock < 5 ? 'text-red-500' : 'text-gray-300'}">${p.stock}</span> | Custo: R$ ${p.cost_price?.toFixed(2)}</p>
                     </div>
                     <div class="text-right">
                         <p class="text-2xl font-black text-blue-400 tracking-tighter italic">R$ ${p.price.toFixed(2)}</p>
@@ -419,7 +419,7 @@
                 const rest = r.total_amount - r.paid_amount;
                 totalPending += rest;
                 return `
-                <div class="bg-gray-800 p-6 rounded-2xl border-l-8 ${r.status === 'parcial' ? 'border-yellow-500' : 'border-red-600'} flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="bg-gray-800 p-6 rounded-2xl border-l-8 ${r.status === 'parcial' ? 'border-yellow-500' : 'border-red-600'} flex flex-col md:flex-row justify-between items-center gap-4 shadow-xl">
                     <div class="w-full md:w-auto">
                         <h4 class="font-black text-white text-xl uppercase italic tracking-tighter">${r.customers?.name || 'Cliente Oculto'}</h4>
                         <div class="flex gap-4 mt-2 text-xs font-bold uppercase text-gray-500">
@@ -454,11 +454,11 @@
             const r = state.receivables.find(x => x.id == currentDebtId);
             const newPaid = r.paid_amount + amount;
             const newStatus = newPaid >= (r.total_amount - 0.01) ? 'pago' : 'parcial';
-            uiLoading(true);
+            ui.loading(true);
             try {
                 await supabase.from('accounts_receivable').update({ paid_amount: newPaid, status: newStatus }).eq('id', currentDebtId);
                 closePaymentModal(); ui.notify("Baixa Registrada!"); await sync();
-            } finally { uiLoading(false); }
+            } finally { ui.loading(false); }
         };
 
         // --- CLIENTES ---
@@ -479,32 +479,39 @@
         async function generateReceiptImg(sale) {
             const area = document.getElementById('receipt-render-area');
             area.innerHTML = `
-                <div style="padding: 30px; background: white; color: black; width: 320px; border: 1px solid #ddd; text-align: center;">
+                <div style="padding: 25px; background: white; color: black; width: 320px; border: 1px solid #ddd; text-align: center;">
                     <div style="margin-bottom: 20px;">
-                        <img src="icon-192.png" style="width: 70px; height: 70px; margin: 0 auto; border-radius: 12px; display: block;">
-                        <h2 style="font-size: 22px; font-weight: 900; margin: 15px 0 2px 0; color: #111;">GERAL GESTÃO</h2>
-                        <p style="font-size: 10px; text-transform: uppercase; letter-spacing: 3px; color: #666; font-weight: bold;">Recibo de Venda</p>
+                        <h2 style="font-size: 24px; font-weight: 900; margin: 0; color: #000; text-transform: uppercase;">GESTÃO</h2>
+                        <p style="font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #555; margin-top: 5px;">Recibo de Venda</p>
                     </div>
-                    <div style="font-size: 11px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 10px 0; margin-bottom: 20px; text-align: left;">
-                        <p style="margin: 2px 0;"><b>DATA:</b> ${new Date(sale.created_at).toLocaleString('pt-BR')}</p>
-                        <p style="margin: 2px 0;"><b>DOC:</b> #${sale.id}</p>
-                        <p style="margin: 2px 0;"><b>CLIENTE:</b> ${sale.customers?.name || 'CONSUMIDOR FINAL'}</p>
-                        <p style="margin: 2px 0;"><b>PAGAMENTO:</b> ${sale.payment_method === 'prazo' ? 'A PRAZO (PENDENTE)' : sale.payment_method.toUpperCase()}</p>
+                    
+                    <div style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 10px 0; margin-bottom: 20px; text-align: left; font-size: 11px; line-height: 1.5;">
+                        <p><b>DATA:</b> ${new Date(sale.created_at).toLocaleString('pt-BR')}</p>
+                        <p><b>DOC:</b> #${sale.id}</p>
+                        <p><b>CLIENTE:</b> ${sale.customers?.name || 'CONSUMIDOR FINAL'}</p>
+                        <p><b>PAGAMENTO:</b> ${sale.payment_method === 'prazo' ? 'A PRAZO (PENDENTE)' : sale.payment_method.toUpperCase()}</p>
                     </div>
-                    <div style="font-size: 11px; line-height: 2; text-align: left; margin-bottom: 20px;">
+
+                    <div style="font-size: 11px; text-align: left; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 5px; font-weight: bold;">
+                            <span>DESCRIÇÃO</span>
+                            <span>VALOR</span>
+                        </div>
                         ${sale.items.map(i => `
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>${i.quantity}x ${i.name.substring(0, 18)}</span>
-                                <span style="font-weight: bold;">R$ ${((i.price * i.quantity) - i.discount).toFixed(2)}</span>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span>${i.quantity}x ${i.name.substring(0, 22)}</span>
+                                <span>R$ ${((i.price * i.quantity) - i.discount).toFixed(2)}</span>
                             </div>
                         `).join('')}
                     </div>
-                    <div style="margin-top: 15px; border-top: 3px solid #000; padding-top: 15px; display: flex; justify-content: space-between; font-weight: 900; font-size: 20px; color: #000;">
+
+                    <div style="border-top: 2px solid #000; padding-top: 10px; display: flex; justify-content: space-between; font-weight: 900; font-size: 22px; color: #000;">
                         <span>TOTAL</span>
                         <span>R$ ${sale.total.toFixed(2)}</span>
                     </div>
-                    <div style="margin-top: 40px; font-size: 9px; color: #888; font-style: italic;">
-                        Obrigado por comprar connosco!<br>www.geralgestao.com.br
+
+                    <div style="margin-top: 40px; font-size: 9px; color: #777; font-style: italic;">
+                        Obrigado por comprar conosco!<br>www.gestao.com.br
                     </div>
                 </div>
             `;
@@ -519,7 +526,7 @@
         async function shareImg(data) {
             const blob = await (await fetch(data)).blob();
             const file = new File([blob], 'comprovante.jpg', { type: 'image/jpeg' });
-            if (navigator.share) await navigator.share({ files: [file] });
+            if (navigator.share) await navigator.share({ files: [file], title: 'Recibo de Venda' });
             else { const a = document.createElement('a'); a.href = data; a.download = 'comprovante.jpg'; a.click(); }
         }
         window.closeReceiptModal = () => document.getElementById('receipt-modal').classList.add('hidden');
