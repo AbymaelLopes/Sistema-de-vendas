@@ -2,84 +2,54 @@ Sistema de Gestão de Vendas, Estoque e Clientes
 
 Bem-vindo ao Sistema de Gestão! Esta é uma aplicação web completa e de página única, desenhada para pequenos negócios e trabalhadores independentes que precisam de uma forma simples e eficiente de gerir as suas operações diárias.
 
-A aplicação é totalmente funcional offline e pode ser "instalada" no seu telemóvel ou computador, comportando-se como uma aplicação nativa. Todos os dados são guardados localmente no seu dispositivo, garantindo privacidade e acesso rápido.
+A aplicação é um PWA (Progressive Web App) conectado ao Supabase, permitindo que os seus dados estejam seguros na nuvem e acessíveis em qualquer dispositivo.
 
 ✨ Funcionalidades Principais
 
-O sistema está dividido em três áreas principais para uma gestão organizada:
-
 1. 📈 Vendas
 
-Registo Rápido: Adicione produtos ao carrinho, selecione um cliente e finalize a venda em segundos.
+Registo Rápido: Adicione produtos ao carrinho, selecione um cliente e finalize a venda.
 
-Cálculo Automático: O total da venda é calculado em tempo real.
+Descontos: Aplique descontos individuais por item no momento da venda.
 
-Histórico Completo: Todas as vendas ficam registadas com data, hora, itens, total e o cliente associado.
+Vendas a Prazo: Opção de vender "fiado", gerando automaticamente uma pendência no financeiro.
+
+Comprovativos: Gere comprovativos em formato de imagem (JPG) prontos para partilhar via WhatsApp ou redes sociais.
 
 2. 📦 Estoque
 
-Adicionar Produtos: Registe facilmente novos produtos com nome, preço e quantidade inicial.
+Gestão de Preços: Defina o preço de custo e o markup para calcular automaticamente o preço de venda (ou vice-versa).
 
-Gestão de Inventário: Visualize todos os produtos, os seus preços e a quantidade disponível.
+Busca em Tempo Real: Localize produtos rapidamente através da barra de pesquisa.
 
-Atualização Fácil: Edite o preço e a quantidade em estoque de qualquer produto através de uma janela de edição intuitiva.
-
-Remoção de Itens: Apague produtos que já não comercializa.
+Controlo de Quantidade: Edite níveis de estoque e preços de forma intuitiva.
 
 3. 👥 Clientes
 
-Base de Clientes: Crie um registo dos seus clientes com nome, telefone e e-mail.
+Base de Dados: Registe nome, telefone e e-mail dos seus clientes.
 
-Associação de Vendas: Associe vendas a clientes específicos para um melhor acompanhamento.
+Histórico Financeiro: Saiba exatamente o que cada cliente comprou e quanto deve.
 
-Gestão Simples: Adicione ou remova clientes da sua lista a qualquer momento.
+4. 💰 Financeiro (Contas a Receber)
 
-🚀 Como Instalar e Usar (PWA)
+Gestão de Dívidas: Visualize todas as vendas a prazo pendentes.
 
-Esta aplicação é um Progressive Web App (PWA), o que significa que pode ser adicionada ao ecrã principal do seu dispositivo.
+Baixas Parciais: Registe pagamentos parciais; o sistema abate o valor e mantém o saldo devedor atualizado até à quitação total.
 
-Pré-requisitos
+5. 📊 Relatórios
 
-Para que a funcionalidade PWA (instalação e modo offline) funcione, os ficheiros (index.html, manifest.json, service-worker.js) devem ser servidos a partir de um servidor web seguro (https://). Não irá funcionar se abrir o index.html diretamente do seu computador.
+Lucro Real: Acompanhe a sua rentabilidade baseada no custo vs venda.
 
-Opções de Hospedagem Gratuitas:
+Visão Geral: Gráficos de vendas por período e métodos de pagamento preferidos.
 
-Netlify
+🚀 Instalação
 
-Vercel
+Configure o seu projeto no Supabase e execute os scripts SQL de migração.
 
-GitHub Pages
+Insira a sua SUPABASE_URL e SUPABASE_ANON_KEY no ficheiro index.html.
 
-Passos para Instalação
+Hospede os ficheiros num servidor HTTPS (GitHub Pages, Netlify, etc.).
 
-Faça o upload dos ficheiros para um dos serviços de hospedagem acima.
+Abra o link no telemóvel e selecione "Adicionar ao ecrã inicial".
 
-Aceda ao link gerado pelo serviço no seu dispositivo.
-
-Em Android (com Chrome)
-
-O navegador deverá mostrar uma notificação para "Adicionar à tela inicial".
-
-Se não aparecer, vá ao menu (três pontos) e selecione "Instalar aplicativo".
-
-Em iOS (com Safari)
-
-Toque no ícone de "Partilhar" (um quadrado com uma seta para cima).
-
-No menu, selecione a opção "Adicionar à tela de Início".
-
-Depois de instalada, a aplicação terá o seu próprio ícone e abrirá em ecrã inteiro, como qualquer outra aplicação!
-
-🛠️ Tecnologias Utilizadas
-
-HTML5: Estrutura da aplicação.
-
-Tailwind CSS: Para um design moderno, responsivo e utilitário.
-
-JavaScript (ES6+): Toda a lógica da aplicação, manipulação do DOM e gestão de dados.
-
-LocalStorage API: Para guardar todos os dados (produtos, vendas, clientes) diretamente no navegador do utilizador.
-
-Progressive Web App (PWA): Usando um manifest.json e um Service Worker para permitir a instalação e o funcionamento offline.
-
-Este projeto foi desenvolvido para ser uma solução leve, sem dependências de frameworks complexos ou bases de dados externas.
+Este projeto utiliza Tailwind CSS para o design, Chart.js para relatórios e html2canvas para a geração de imagens.
