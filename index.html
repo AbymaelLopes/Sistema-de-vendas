@@ -10,6 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2canvas para geração de imagens do comprovativo -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
@@ -38,12 +39,12 @@
 </head>
 <body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col lg:flex-row">
 
-    <!-- TELA DE LOGIN -->
-    <div id="login-screen" class="fixed inset-0 bg-gray-900 z-[10000] flex items-center justify-center p-4">
+    <!-- TELA DE LOGIN (MODAL) -->
+    <div id="login-screen" class="hidden fixed inset-0 bg-black/90 z-[10000] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="max-w-md w-full bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl">
             <div class="text-center mb-8">
                 <h1 class="text-4xl font-black text-white italic">GESTÃO</h1>
-                <p class="text-gray-400 mt-2">Acesso ao Sistema</p>
+                <p class="text-gray-400 mt-2">Identifique-se para continuar</p>
             </div>
             <form id="login-form" class="space-y-4">
                 <div>
@@ -54,28 +55,31 @@
                     <label class="text-xs font-bold text-gray-500 uppercase">Senha</label>
                     <input type="password" id="login-password" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 mt-1 text-white outline-none focus:border-blue-500" required>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl mt-4 transition transform active:scale-95 shadow-lg">ENTRAR</button>
-                <div class="flex justify-between text-xs font-bold mt-6 text-gray-400">
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="closeLogin()" class="flex-1 bg-gray-700 text-white font-bold py-4 rounded-xl transition">CANCELAR</button>
+                    <button type="submit" class="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl transition transform active:scale-95 shadow-lg">ENTRAR</button>
+                </div>
+                <div class="text-center text-xs font-bold mt-6 text-gray-500">
                     <button type="button" onclick="showAuthModal('reset')" class="hover:text-blue-400 transition">Esqueci a senha</button>
-                    <button type="button" onclick="showAuthModal('reg')" class="hover:text-blue-400 transition">Não tenho cadastro</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL DE CADASTRO / RECUPERAÇÃO -->
+    <!-- MODAL DE RECUPERAÇÃO -->
     <div id="auth-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[10001]">
         <div class="card w-full max-w-md shadow-2xl border-2 border-blue-500/20">
-            <h2 id="auth-modal-title" class="text-xl font-black text-white mb-6 italic uppercase tracking-widest">Ação</h2>
+            <h2 class="text-xl font-black text-white mb-6 italic uppercase tracking-widest">Recuperar Senha</h2>
+            <p class="text-xs text-gray-400 mb-4">Informe seu usuário e a nova senha desejada.</p>
             <form id="auth-modal-form" class="space-y-4">
-                <input type="hidden" id="auth-mode">
+                <input type="hidden" id="auth-mode" value="reset">
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Usuário</label>
-                    <input type="text" id="auth-username" class="w-full bg-gray-800 border-2 border-gray-700 rounded-xl p-4 text-white outline-none focus:border-blue-500 transition" required>
+                    <input type="text" id="auth-username" class="w-full bg-gray-800 border-2 border-gray-700 rounded-xl p-4 text-white outline-none focus:border-blue-500" required>
                 </div>
                 <div>
-                    <label id="auth-pass-label" class="text-xs font-bold text-gray-500 uppercase block mb-1">Senha</label>
-                    <input type="password" id="auth-password" class="w-full bg-gray-800 border-2 border-gray-700 rounded-xl p-4 text-white outline-none focus:border-blue-500 transition" required>
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Nova Senha</label>
+                    <input type="password" id="auth-password" class="w-full bg-gray-800 border-2 border-gray-700 rounded-xl p-4 text-white outline-none focus:border-blue-500" required>
                 </div>
                 <div class="flex gap-4 pt-4">
                     <button type="button" onclick="closeAuthModal()" class="flex-1 bg-gray-700 py-4 rounded-xl font-bold transition text-xs uppercase">Cancelar</button>
@@ -98,7 +102,7 @@
         <div class="mb-8 px-2 flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-black text-white italic">GESTÃO</h1>
-                <p class="text-blue-400 text-[10px] font-bold uppercase tracking-widest">Painel Administrativo</p>
+                <p class="text-blue-400 text-[10px] font-bold uppercase tracking-widest text-role-info">Modo Visualização</p>
             </div>
             <button onclick="toggleMenu()" class="lg:hidden text-gray-400 hover:text-white">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -110,37 +114,40 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 Vendas
             </button>
-            <button onclick="showTab('inventory')" id="tab-inventory" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-admin">
+            <button onclick="showTab('inventory')" id="tab-inventory" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-admin-see hidden">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                 Estoque
             </button>
-            <button onclick="showTab('customers')" id="tab-customers" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-admin">
+            <button onclick="showTab('customers')" id="tab-customers" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-admin-see hidden">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 116 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 Clientes
             </button>
-            <button onclick="showTab('finance')" id="tab-finance" class="tab-button px-4 py-3 rounded-xl font-bold text-sm justify-between role-admin">
+            <button onclick="showTab('finance')" id="tab-finance" class="tab-button px-4 py-3 rounded-xl font-bold text-sm justify-between role-admin-see hidden">
                 <div class="flex items-center gap-3">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Financeiro
                 </div>
                 <span id="debt-badge" class="hidden bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black">0</span>
             </button>
-            <button onclick="showTab('reports')" id="tab-reports" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-admin">
+            <button onclick="showTab('reports')" id="tab-reports" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-admin-see hidden">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 Relatórios
             </button>
-            <button onclick="showTab('users')" id="tab-users" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-gerente">
+            <button onclick="showTab('users')" id="tab-users" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-gerente-see hidden">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 Usuários
             </button>
         </nav>
 
         <div class="mt-auto flex flex-col gap-2">
-            <div class="px-4 py-2 bg-gray-900/50 rounded-lg">
-                <p id="logged-user-name" class="text-xs font-black text-blue-400 uppercase italic"></p>
-                <p id="logged-user-role" class="text-[10px] text-gray-500 uppercase font-bold"></p>
+            <div id="user-profile-area" class="px-4 py-3 bg-gray-900/50 rounded-xl flex flex-col gap-2 border border-gray-700/30">
+                <div id="logged-user-info" class="hidden">
+                    <p id="logged-user-name" class="text-xs font-black text-blue-400 uppercase italic"></p>
+                    <p id="logged-user-role" class="text-[10px] text-gray-500 uppercase font-bold"></p>
+                    <button onclick="logout()" class="w-full mt-2 py-2 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-lg font-bold text-[10px] uppercase transition">Sair</button>
+                </div>
+                <button id="btn-show-login" onclick="openLogin()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs uppercase transition shadow-lg">Login Administrativo</button>
             </div>
-            <button onclick="logout()" class="px-4 py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-xl font-bold text-xs uppercase transition">Sair do Sistema</button>
         </div>
     </aside>
 
@@ -172,7 +179,7 @@
                             <span class="text-sm font-bold text-gray-400 uppercase">Total Geral</span>
                             <span id="cart-total" class="text-3xl font-black text-green-400 tracking-tighter">R$ 0,00</span>
                         </div>
-                        <div class="mt-6 space-y-4">
+                        <div class="mt-6 space-y-4 restricted-action hidden">
                             <select id="sale-cust-select" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 text-white font-bold"></select>
                             <select id="sale-payment-method" class="w-full bg-gray-800 border-2 border-blue-500/20 rounded-xl p-3 font-bold text-white">
                                 <option value="Dinheiro">💵 Dinheiro</option>
@@ -181,10 +188,11 @@
                                 <option value="prazo" class="text-orange-400 font-bold">🕒 Venda a Prazo (Fiado)</option>
                             </select>
                         </div>
-                        <button id="btn-finish-sale" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-2xl shadow-xl transition disabled:opacity-30 uppercase tracking-widest role-can-finish">Finalizar Venda</button>
+                        <button id="btn-finish-sale" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-2xl shadow-xl transition disabled:opacity-30 uppercase tracking-widest restricted-action hidden">Finalizar Venda</button>
+                        <p id="guest-sale-msg" class="text-center text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-4">Faça login para finalizar vendas</p>
                     </div>
                 </div>
-                <div class="card role-can-see-history">
+                <div class="card restricted-action hidden">
                     <h2 class="text-xl font-bold text-white border-b border-gray-700 pb-3 mb-4 italic uppercase">Histórico</h2>
                     <div id="sales-log" class="space-y-4 scroll-custom overflow-y-auto max-h-[600px]"></div>
                 </div>
@@ -192,18 +200,24 @@
 
             <!-- ABA ESTOQUE -->
             <section id="view-inventory" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="card lg:col-span-1 h-fit shadow-2xl role-can-modify">
-                    <h2 class="text-xl font-bold text-white mb-6 italic uppercase">Gerir Produto</h2>
+                <div class="card lg:col-span-1 h-fit shadow-2xl">
+                    <h2 id="p-form-title" class="text-xl font-bold text-white mb-6 italic uppercase">Produto</h2>
                     <form id="form-product" class="space-y-4">
                         <input type="hidden" id="p-id">
-                        <input type="text" id="p-name" placeholder="Descrição" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-bold" required>
+                        <input type="text" id="p-name" placeholder="Descrição do Produto" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold disabled:bg-gray-800" required>
                         <div class="grid grid-cols-2 gap-4">
-                            <div><input type="number" id="p-cost" step="0.01" placeholder="Custo (R$)" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3" required></div>
-                            <div><input type="number" id="p-markup" step="0.01" placeholder="Markup (%)" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3"></div>
+                            <div><label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Custo (R$)</label>
+                            <input type="number" id="p-cost" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-bold hide-from-admin" required></div>
+                            <div><label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Markup (%)</label>
+                            <input type="number" id="p-markup" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-bold hide-from-admin"></div>
                         </div>
-                        <input type="number" id="p-price" step="0.01" placeholder="Venda (R$)" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-black text-blue-400" required>
-                        <input type="number" id="p-stock" placeholder="Estoque Atual" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3" required>
-                        <div class="flex gap-2"><button type="submit" class="flex-1 bg-blue-600 py-3 rounded-xl font-black">GUARDAR</button><button type="button" id="btn-cancel-prod" class="hidden bg-gray-600 px-4 rounded-xl">✖</button></div>
+                        <div><label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Venda (R$)</label>
+                        <input type="number" id="p-price" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-black text-blue-400 hide-from-admin" required></div>
+                        <input type="number" id="p-stock" placeholder="Quantidade em Estoque" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-bold" required>
+                        <div class="flex gap-2">
+                            <button type="submit" id="btn-save-prod" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition">Guardar</button>
+                            <button type="button" id="btn-cancel-prod" onclick="resetProductForm()" class="hidden bg-gray-600 hover:bg-gray-700 px-4 rounded-xl">✖</button>
+                        </div>
                     </form>
                 </div>
                 <div class="card lg:col-span-2 shadow-inner">
@@ -213,56 +227,78 @@
             </section>
 
             <!-- ABA FINANCEIRO -->
-            <section id="view-finance" class="hidden"><div class="card"><h2 class="text-2xl font-black text-white italic uppercase mb-8">Contas a Receber</h2><div id="receivables-container" class="space-y-4"></div></div></section>
+            <section id="view-finance" class="hidden">
+                <div class="card">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 border-b border-gray-700 pb-6">
+                        <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Contas a Receber</h2>
+                        <div class="bg-red-500/10 px-6 py-3 rounded-2xl border border-red-500/30 text-center">
+                            <p class="text-[10px] text-red-400 font-black uppercase tracking-widest">Pendente</p>
+                            <p id="total-pending-amount" class="text-3xl font-black text-red-500 tracking-tighter">R$ 0,00</p>
+                        </div>
+                    </div>
+                    <div id="receivables-container" class="space-y-4"></div>
+                </div>
+            </section>
+
+            <!-- ABA CLIENTES -->
+            <section id="view-customers" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="card h-fit">
+                    <h2 id="cust-form-title" class="text-xl font-bold text-white mb-6 italic uppercase">Cliente</h2>
+                    <form id="form-customer" class="space-y-4">
+                        <input type="hidden" id="c-id">
+                        <input type="text" id="c-name" placeholder="Nome Completo" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required>
+                        <input type="tel" id="c-phone" placeholder="WhatsApp / Telefone" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold">
+                        <div class="flex gap-2">
+                            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl mt-4 transition">Guardar Cliente</button>
+                            <button type="button" id="btn-cancel-cust" onclick="resetCustomerForm()" class="hidden bg-gray-600 px-4 rounded-xl mt-4">✖</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card lg:col-span-2 shadow-inner"><div id="cust-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div>
+            </section>
 
             <!-- ABA USUÁRIOS -->
             <section id="view-users" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="card h-fit shadow-2xl">
-                    <h2 id="user-form-title" class="text-xl font-bold text-white mb-6 italic uppercase">Novo Usuário</h2>
+                    <h2 id="user-form-title" class="text-xl font-bold text-white mb-6 italic uppercase tracking-tighter">Gestão de Usuários</h2>
                     <form id="form-user" class="space-y-4">
                         <input type="hidden" id="u-id">
-                        <div>
-                            <label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Usuário</label>
-                            <input type="text" id="u-username" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required>
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Senha</label>
-                            <input type="password" id="u-password" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required>
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Cargo</label>
-                            <select id="u-role" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold">
-                                <option value="usuario">Usuário Comum (Só Vendas)</option>
-                                <option value="administrador">Administrador (Visualizador)</option>
-                                <option value="gerente">Gerente (Acesso Total)</option>
-                            </select>
-                        </div>
-                        <div class="flex gap-2">
-                            <button type="submit" id="btn-save-user" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl mt-4 transition">CRIAR USUÁRIO</button>
-                            <button type="button" id="btn-cancel-user" onclick="resetUserForm()" class="hidden bg-gray-600 px-4 rounded-xl mt-4">✖</button>
-                        </div>
+                        <div><label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Usuário</label>
+                        <input type="text" id="u-username" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required></div>
+                        <div><label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Senha</label>
+                        <input type="password" id="u-password" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required></div>
+                        <div><label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Cargo</label>
+                        <select id="u-role" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold">
+                            <option value="administrador">Administrador (Gestão Operacional)</option>
+                            <option value="gerente">Gerente (Acesso Total)</option>
+                        </select></div>
+                        <div class="flex gap-2"><button type="submit" id="btn-save-user" class="flex-1 bg-blue-600 font-black py-4 rounded-xl mt-4 transition">GUARDAR</button><button type="button" id="btn-cancel-user" onclick="resetUserForm()" class="hidden bg-gray-600 px-4 rounded-xl mt-4">✖</button></div>
                     </form>
                 </div>
-                <div class="card lg:col-span-2">
-                    <div id="user-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-                </div>
+                <div class="card lg:col-span-2"><div id="user-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></div>
             </section>
 
-            <!-- ABA CLIENTES/RELATÓRIOS -->
-            <section id="view-customers" class="hidden"><div id="cust-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></section>
             <section id="view-reports" class="hidden space-y-8"><div id="rep-summary"></div></section>
-
         </main>
     </div>
 
-    <!-- MODAIS -->
+    <!-- MODAL DO RECIBO -->
     <div id="receipt-modal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 z-[1000]">
         <div class="max-w-sm w-full flex flex-col items-center justify-center">
-            <div id="receipt-img-box" class="border-4 border-gray-800 rounded-2xl mb-8 overflow-hidden bg-white shadow-2xl mx-auto"></div>
+            <div id="receipt-img-box" class="border-4 border-gray-800 rounded-2xl mb-8 overflow-hidden bg-white shadow-2xl mx-auto flex items-center justify-center"></div>
             <div class="flex flex-col gap-3 w-full">
-                <button id="btn-receipt-share" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-black text-sm uppercase">Compartilhar</button>
-                <button onclick="closeReceiptModal()" class="w-full bg-white/10 text-white py-3 rounded-xl font-bold text-xs uppercase">Fechar</button>
+                <button id="btn-receipt-share" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest">Compartilhar Recibo</button>
+                <button onclick="closeReceiptModal()" class="w-full bg-white/10 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest">Fechar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL BAIXA FINANCEIRA -->
+    <div id="modal-payment" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999]">
+        <div class="card w-full max-w-md shadow-2xl border-2 border-blue-500/20">
+            <h2 class="text-xl font-black text-white mb-6 italic uppercase tracking-tighter">Receber Pagamento</h2>
+            <input type="number" id="pay-input-amount" step="0.01" class="w-full bg-gray-800 border-2 border-gray-700 rounded-2xl p-5 text-4xl font-black text-green-400 outline-none focus:border-green-500">
+            <div class="flex gap-4 mt-6"><button onclick="closePaymentModal()" class="flex-1 bg-gray-700 py-4 rounded-xl font-bold transition text-xs">CANCELAR</button><button id="btn-pay-confirm" class="flex-[2] bg-green-600 py-4 rounded-xl font-black uppercase text-xs">Confirmar Baixa</button></div>
         </div>
     </div>
 
@@ -277,7 +313,7 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let state = {
-            products: [], customers: [], sales: [], receivables: [], cart: [], users: [], user: null
+            products: [], customers: [], sales: [], receivables: [], cart: [], users: [], user: null, charts: {}
         };
 
         const ui = {
@@ -290,206 +326,101 @@
             }
         };
 
-        // --- AUTH LOGIC (LOGIN / CADASTRO / RESET) ---
+        // --- AUTH ---
+        window.openLogin = () => document.getElementById('login-screen').classList.remove('hidden');
+        window.closeLogin = () => document.getElementById('login-screen').classList.add('hidden');
+
         document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
-            const { data, error } = await supabase.from('app_users').select('*').eq('username', username).eq('password', password).single();
+            const { data } = await supabase.from('app_users').select('*').eq('username', username).eq('password', password).single();
             if (data) {
-                loginSuccess(data);
-            } else {
-                ui.notify("Dados Inválidos!", true);
-            }
+                state.user = data;
+                localStorage.setItem('gestao_user', JSON.stringify(data));
+                closeLogin();
+                applyPermissions();
+                await sync();
+                ui.notify("✅ Login realizado!");
+            } else { ui.notify("Usuário ou senha inválidos!", true); }
         };
-
-        function loginSuccess(userData) {
-            state.user = userData;
-            localStorage.setItem('gestao_user', JSON.stringify(userData));
-            document.getElementById('login-screen').classList.add('hidden');
-            applyPermissions();
-            sync();
-        }
 
         window.logout = () => {
             localStorage.removeItem('gestao_user');
             location.reload();
         };
 
-        window.showAuthModal = (mode) => {
-            const modal = document.getElementById('auth-modal');
-            const title = document.getElementById('auth-modal-title');
-            const modeInput = document.getElementById('auth-mode');
-            const passLabel = document.getElementById('auth-pass-label');
-            
-            modal.classList.remove('hidden');
-            modeInput.value = mode;
-            
-            if (mode === 'reg') {
-                title.textContent = "Novo Cadastro";
-                passLabel.textContent = "Nova Senha";
-            } else {
-                title.textContent = "Recuperar Senha";
-                passLabel.textContent = "Definir Nova Senha";
-            }
-        };
-
-        window.closeAuthModal = () => document.getElementById('auth-modal').classList.add('hidden');
-
-        document.getElementById('auth-modal-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const mode = document.getElementById('auth-mode').value;
-            const user = document.getElementById('auth-username').value;
-            const pass = document.getElementById('auth-password').value;
-
-            ui.loading(true);
-            try {
-                if (mode === 'reg') {
-                    // Cadastro de Usuário Final
-                    const { data, error } = await supabase.from('app_users').insert({ username: user, password: pass, role: 'usuario' }).select().single();
-                    if (error) throw error;
-                    ui.notify("✅ Cadastro realizado! Entre agora.");
-                } else {
-                    // Reset de Senha (Sem validação externa neste modelo simples)
-                    const { data, error } = await supabase.from('app_users').update({ password: pass }).eq('username', user).select().single();
-                    if (error || !data) throw new Error("Usuário não encontrado");
-                    ui.notify("✅ Senha atualizada!");
-                }
-                closeAuthModal();
-            } catch(err) {
-                ui.notify(err.message, true);
-            } finally {
-                ui.loading(false);
-            }
-        };
-
         function applyPermissions() {
-            const role = state.user.role;
-            document.getElementById('logged-user-name').textContent = state.user.username;
-            document.getElementById('logged-user-role').textContent = role;
-
-            if (role === 'usuario') {
-                document.querySelectorAll('.role-admin, .role-gerente').forEach(el => el.classList.add('hidden'));
-                document.querySelectorAll('.role-can-finish, .role-can-see-history').forEach(el => el.classList.add('hidden'));
-            } else if (role === 'administrador') {
-                document.querySelectorAll('.role-gerente').forEach(el => el.classList.add('hidden'));
-                document.querySelectorAll('.role-can-modify').forEach(el => el.classList.add('hidden'));
+            const role = state.user ? state.user.role : 'visitante';
+            const roleLabel = document.querySelector('.text-role-info');
+            
+            // UI Sidebar Profile
+            if (state.user) {
+                document.getElementById('logged-user-info').classList.remove('hidden');
+                document.getElementById('btn-show-login').classList.add('hidden');
+                document.getElementById('logged-user-name').textContent = state.user.username;
+                document.getElementById('logged-user-role').textContent = role;
+                roleLabel.textContent = `Modo ${role}`;
+            } else {
+                document.getElementById('logged-user-info').classList.add('hidden');
+                document.getElementById('btn-show-login').classList.remove('hidden');
+                roleLabel.textContent = "Modo Visitante";
             }
+
+            // Exibir/Ocultar Menus Baseados no Cargo
+            document.querySelectorAll('.role-admin-see').forEach(el => el.classList.toggle('hidden', role === 'visitante'));
+            document.querySelectorAll('.role-gerente-see').forEach(el => el.classList.toggle('hidden', role !== 'gerente'));
+            
+            // Restrições de Venda para Visitante
+            document.querySelectorAll('.restricted-action').forEach(el => el.classList.toggle('hidden', role === 'visitante'));
+            document.getElementById('guest-sale-msg').classList.toggle('hidden', role !== 'visitante');
+
+            // Restrições Administrativas (Visualizador não muda valores)
+            const isAdminOnly = role === 'administrador';
+            document.querySelectorAll('.hide-from-admin').forEach(el => el.parentElement.classList.toggle('hidden', isAdminOnly));
+            document.getElementById('p-name').disabled = isAdminOnly;
         }
 
-        // --- GESTÃO DE USUÁRIOS (GERENTE) ---
-        window.editUser = (id) => {
-            const u = state.users.find(x => x.id == id);
-            if (!u) return;
-            document.getElementById('u-id').value = u.id;
-            document.getElementById('u-username').value = u.username;
-            document.getElementById('u-password').value = u.password;
-            document.getElementById('u-role').value = u.role;
-            document.getElementById('user-form-title').textContent = "Editar Usuário";
-            document.getElementById('btn-save-user').textContent = "ATUALIZAR";
-            document.getElementById('btn-cancel-user').classList.remove('hidden');
-        };
-
-        window.resetUserForm = () => {
-            document.getElementById('u-id').value = '';
-            document.getElementById('form-user').reset();
-            document.getElementById('user-form-title').textContent = "Novo Usuário";
-            document.getElementById('btn-save-user').textContent = "CRIAR USUÁRIO";
-            document.getElementById('btn-cancel-user').classList.add('hidden');
-        };
-
-        document.getElementById('form-user').onsubmit = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('u-id').value;
-            const data = {
-                username: document.getElementById('u-username').value,
-                password: document.getElementById('u-password').value,
-                role: document.getElementById('u-role').value
-            };
-
-            ui.loading(true);
-            try {
-                if (id) {
-                    await supabase.from('app_users').update(data).eq('id', id);
-                    ui.notify("✅ Usuário atualizado");
-                } else {
-                    await supabase.from('app_users').insert(data);
-                    ui.notify("✅ Usuário criado");
-                }
-                resetUserForm();
-                syncUsers();
-            } catch(e) { ui.notify("Erro na operação", true); }
-            finally { ui.loading(false); }
-        };
-
-        async function syncUsers() {
-            const { data } = await supabase.from('app_users').select('*').order('username');
-            state.users = data || [];
-            document.getElementById('user-list').innerHTML = state.users.map(u => `
-                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 flex justify-between items-center group transition shadow-lg">
-                    <div>
-                        <p class="font-black text-white italic uppercase">${u.username}</p>
-                        <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">${u.role}</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="editUser(${u.id})" class="text-[9px] font-black text-gray-500 hover:text-white transition uppercase tracking-widest">Editar</button>
-                        <button onclick="deleteUser(${u.id})" class="text-[9px] font-black text-red-900 hover:text-red-500 transition uppercase tracking-widest">Apagar</button>
-                    </div>
-                </div>`).join('');
-        }
-
-        window.deleteUser = async (id) => {
-            if (id === state.user.id) return ui.notify("Não pode apagar-se!", true);
-            if (!confirm("Tem certeza que deseja remover este acesso?")) return;
-            await supabase.from('app_users').delete().eq('id', id);
-            syncUsers();
-        };
-
-        // --- NAVEGAÇÃO / CORE ---
+        // --- NAVEGAÇÃO ---
         window.toggleMenu = () => {
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('sidebar-backdrop');
-            sidebar.classList.toggle('open');
-            backdrop.classList.toggle('hidden');
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebar-backdrop').classList.toggle('hidden');
         };
 
         window.showTab = (id) => {
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
             document.getElementById(`view-${id}`).classList.remove('hidden');
-            if (window.innerWidth < 1024) toggleMenu();
+            if (window.innerWidth < 1024) document.getElementById('sidebar').classList.remove('open'), document.getElementById('sidebar-backdrop').classList.add('hidden');
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('tab-active'));
             const activeBtn = document.getElementById(`tab-${id}`);
             if (activeBtn) activeBtn.classList.add('tab-active');
-            if(id === 'users' && state.user.role === 'gerente') syncUsers();
+            if(id === 'users') syncUsers();
+            if(id === 'reports') renderReports();
         };
 
+        // --- SINCRONIZAÇÃO ---
         async function sync() {
-            if (!state.user) return;
             ui.loading(true);
             try {
-                const [pResp, cResp, sResp, rResp] = await Promise.all([
+                const [p, c, s, r] = await Promise.all([
                     supabase.from('products').select('*').order('name'),
                     supabase.from('customers').select('*').order('name'),
                     supabase.from('sales').select('*, customers(name)').order('created_at', { ascending: false }),
                     supabase.from('accounts_receivable').select('*, customers(name)').order('created_at', { ascending: false })
                 ]);
-                state.products = pResp.data || [];
-                state.customers = cResp.data || [];
-                state.sales = sResp.data || [];
-                state.receivables = rResp.data || [];
+                state.products = p.data || [];
+                state.customers = c.data || [];
+                state.sales = s.data || [];
+                state.receivables = r.data || [];
                 render();
             } finally { ui.loading(false); }
         }
 
         function render() {
-            renderPDV();
-            renderInventory();
-            renderFinance();
-            renderSalesLog();
-            updateDebtBadge();
+            renderPDV(); renderInventory(); renderCustomers(); renderFinance(); renderSalesLog(); updateDebtBadge();
         }
 
-        // --- PDV / VENDAS ---
+        // --- PDV ---
         function renderPDV() {
             const term = document.getElementById('sale-search-prod').value.toLowerCase();
             const list = state.products.filter(p => p.name.toLowerCase().includes(term));
@@ -503,17 +434,19 @@
             const qty = parseInt(document.getElementById('sale-qty').value);
             if (!p || qty < 1) return;
             state.cart.push({ ...p, quantity: qty, discount: parseFloat(document.getElementById('sale-disc').value) || 0 });
-            renderCart();
+            renderCart(); ui.notify("Adicionado");
         };
 
         function renderCart() {
             const total = state.cart.reduce((acc, i) => acc + (i.price * i.quantity) - i.discount, 0);
             document.getElementById('cart-total').textContent = `R$ ${total.toFixed(2)}`;
-            document.getElementById('cart-list').innerHTML = state.cart.map((i, idx) => `<div class="flex justify-between bg-gray-800 p-3 rounded-xl border border-gray-700/50"><span>${i.quantity}x ${i.name}</span><button onclick="removeFromCart(${idx})" class="text-red-500">✖</button></div>`).join('');
+            document.getElementById('cart-list').innerHTML = state.cart.map((i, idx) => `<div class="flex justify-between bg-gray-800 p-3 rounded-xl border border-gray-700/50 shadow-inner italic"><span>${i.quantity}x ${i.name}</span><button onclick="removeFromCart(${idx})" class="text-red-500 font-black">✖</button></div>`).join('');
+            document.getElementById('btn-finish-sale').disabled = state.cart.length === 0;
         }
         window.removeFromCart = (idx) => { state.cart.splice(idx, 1); renderCart(); };
 
         document.getElementById('btn-finish-sale').onclick = async () => {
+            if (!state.user) return openLogin();
             const method = document.getElementById('sale-payment-method').value;
             const cid = document.getElementById('sale-cust-select').value;
             const total = state.cart.reduce((acc, i) => acc + (i.price * i.quantity) - i.discount, 0);
@@ -522,21 +455,112 @@
                 const customerId = cid ? parseInt(cid) : null;
                 const { data: newSale } = await supabase.from('sales').insert([{ customer_id: customerId, total, payment_method: method, items: state.cart, status: 'ativa' }]).select().single();
                 if (method === 'prazo') await supabase.from('accounts_receivable').insert([{ sale_id: newSale.id, customer_id: customerId, total_amount: total, paid_amount: 0, status: 'pendente' }]);
-                for (const item of state.cart) {
-                    await supabase.from('products').update({ stock: item.stock - item.quantity }).eq('id', item.id);
-                }
+                for (const item of state.cart) { await supabase.from('products').update({ stock: item.stock - item.quantity }).eq('id', item.id); }
                 state.cart = []; renderCart(); await sync(); generateReceiptImg(newSale);
-            } catch(e) { console.error(e); }
-            finally { ui.loading(false); }
+            } finally { ui.loading(false); }
         };
 
         // --- ESTOQUE ---
+        const costIn = document.getElementById('p-cost');
+        const markIn = document.getElementById('p-markup');
+        const priceIn = document.getElementById('p-price');
+        costIn.oninput = markIn.oninput = () => {
+            const cost = parseFloat(costIn.value) || 0;
+            const mark = parseFloat(markIn.value) || 0;
+            if (cost > 0 && mark > 0) priceIn.value = (cost * (1 + mark/100)).toFixed(2);
+        };
+        priceIn.oninput = () => {
+            const cost = parseFloat(costIn.value) || 0;
+            const price = parseFloat(priceIn.value) || 0;
+            if (cost > 0 && price > cost) markIn.value = (((price/cost)-1)*100).toFixed(2);
+        };
+
+        document.getElementById('form-product').onsubmit = async (e) => {
+            e.preventDefault();
+            if (!state.user) return;
+            const id = document.getElementById('p-id').value;
+            const isAdmin = state.user.role === 'administrador';
+            
+            const data = isAdmin ? { stock: parseInt(document.getElementById('p-stock').value) } : {
+                name: document.getElementById('p-name').value,
+                cost_price: parseFloat(costIn.value),
+                markup: parseFloat(markIn.value),
+                price: parseFloat(priceIn.value),
+                stock: parseInt(document.getElementById('p-stock').value)
+            };
+
+            ui.loading(true);
+            try {
+                const { error } = id ? await supabase.from('products').update(data).eq('id', id) : await supabase.from('products').insert(data);
+                if (!error) { resetProductForm(); await sync(); ui.notify("✅ Atualizado!"); }
+            } finally { ui.loading(false); }
+        };
+
+        window.editProduct = (id) => {
+            if (state.user?.role === 'visitante') return;
+            const p = state.products.find(x => x.id == id);
+            document.getElementById('p-id').value = p.id;
+            document.getElementById('p-name').value = p.name;
+            costIn.value = p.cost_price; markIn.value = p.markup; priceIn.value = p.price;
+            document.getElementById('p-stock').value = p.stock;
+            document.getElementById('p-form-title').textContent = "Editar Produto";
+            document.getElementById('btn-cancel-prod').classList.remove('hidden');
+        };
+
+        window.resetProductForm = () => {
+            document.getElementById('p-id').value = '';
+            document.getElementById('form-product').reset();
+            document.getElementById('p-form-title').textContent = "Produto";
+            document.getElementById('btn-cancel-prod').classList.add('hidden');
+        };
+
         function renderInventory() {
             const term = document.getElementById('inv-search').value.toLowerCase();
             document.getElementById('inv-list').innerHTML = state.products.filter(p => p.name.toLowerCase().includes(term)).map(p => `
-                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 flex justify-between items-center group transition">
-                    <div><p class="font-black text-white italic transition tracking-tighter uppercase">${p.name}</p><p class="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-widest">STOCK: ${p.stock} | Custo: R$ ${p.cost_price}</p></div>
-                    <div class="text-right"><p class="text-2xl font-black text-blue-400 tracking-tighter italic">R$ ${p.price.toFixed(2)}</p></div>
+                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 flex justify-between items-center group transition shadow-lg">
+                    <div>
+                        <p class="font-black text-white italic uppercase">${p.name}</p>
+                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">STOCK: ${p.stock} un</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xl font-black text-blue-400">R$ ${p.price.toFixed(2)}</p>
+                        <button onclick="editProduct(${p.id})" class="text-[9px] font-black text-gray-500 uppercase mt-2 hover:text-white transition tracking-widest">Ajustar</button>
+                    </div>
+                </div>`).join('');
+        }
+        document.getElementById('inv-search').oninput = renderInventory;
+
+        // --- CLIENTES ---
+        document.getElementById('form-customer').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('c-id').value;
+            const data = { name: document.getElementById('c-name').value, phone: document.getElementById('c-phone').value };
+            ui.loading(true);
+            try {
+                if(id) await supabase.from('customers').update(data).eq('id', id);
+                else await supabase.from('customers').insert(data);
+                resetCustomerForm(); await sync(); ui.notify("✅ Cliente salvo");
+            } finally { ui.loading(false); }
+        };
+        window.editCust = (id) => {
+            const c = state.customers.find(x => x.id == id);
+            document.getElementById('c-id').value = c.id;
+            document.getElementById('c-name').value = c.name;
+            document.getElementById('c-phone').value = c.phone;
+            document.getElementById('cust-form-title').textContent = "Editar Cliente";
+            document.getElementById('btn-cancel-cust').classList.remove('hidden');
+        };
+        window.resetCustomerForm = () => {
+            document.getElementById('c-id').value = '';
+            document.getElementById('form-customer').reset();
+            document.getElementById('cust-form-title').textContent = "Cliente";
+            document.getElementById('btn-cancel-cust').classList.add('hidden');
+        };
+        function renderCustomers() {
+            document.getElementById('cust-list').innerHTML = state.customers.map(c => `
+                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 flex justify-between items-center group transition shadow-lg">
+                    <div><p class="font-black text-white italic uppercase">${c.name}</p><p class="text-[10px] text-gray-500 mt-1">${c.phone || '-'}</p></div>
+                    <button onclick="editCust(${c.id})" class="text-[9px] font-black text-gray-500 uppercase hover:text-white transition tracking-widest">Editar</button>
                 </div>`).join('');
         }
 
@@ -551,16 +575,63 @@
             document.getElementById('total-pending-amount').textContent = `R$ ${total.toFixed(2)}`;
         }
 
+        // --- USUÁRIOS ---
+        async function syncUsers() {
+            const { data } = await supabase.from('app_users').select('*').order('username');
+            state.users = data || [];
+            document.getElementById('user-list').innerHTML = state.users.map(u => `
+                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 flex justify-between items-center shadow-lg">
+                    <div><p class="font-black text-white italic uppercase">${u.username}</p><p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">${u.role}</p></div>
+                    <div class="flex gap-3">
+                        <button onclick="editUser(${u.id})" class="text-[9px] font-black text-gray-400 hover:text-white transition tracking-widest">Editar</button>
+                        <button onclick="deleteUser(${u.id})" class="text-[9px] font-black text-red-900 hover:text-red-500 transition tracking-widest">Apagar</button>
+                    </div>
+                </div>`).join('');
+        }
+        window.editUser = (id) => {
+            const u = state.users.find(x => x.id == id);
+            document.getElementById('u-id').value = u.id;
+            document.getElementById('u-username').value = u.username;
+            document.getElementById('u-password').value = u.password;
+            document.getElementById('u-role').value = u.role;
+            document.getElementById('user-form-title').textContent = "Editar Usuário";
+            document.getElementById('btn-save-user').textContent = "ATUALIZAR";
+            document.getElementById('btn-cancel-user').classList.remove('hidden');
+        };
+        window.resetUserForm = () => {
+            document.getElementById('u-id').value = '';
+            document.getElementById('form-user').reset();
+            document.getElementById('user-form-title').textContent = "Gestão de Usuários";
+            document.getElementById('btn-save-user').textContent = "GUARDAR";
+            document.getElementById('btn-cancel-user').classList.add('hidden');
+        };
+        document.getElementById('form-user').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('u-id').value;
+            const data = { username: document.getElementById('u-username').value, password: document.getElementById('u-password').value, role: document.getElementById('u-role').value };
+            ui.loading(true);
+            try {
+                if(id) await supabase.from('app_users').update(data).eq('id', id);
+                else await supabase.from('app_users').insert(data);
+                resetUserForm(); syncUsers(); ui.notify("✅ Pronto!");
+            } finally { ui.loading(false); }
+        };
+        window.deleteUser = async (id) => {
+            if (id === state.user?.id) return ui.notify("Não pode apagar-se!", true);
+            if(confirm("Remover acesso?")) { await supabase.from('app_users').delete().eq('id', id); syncUsers(); }
+        };
+
         // --- RECIBO ---
         async function generateReceiptImg(sale) {
             const area = document.getElementById('receipt-render-area');
             area.innerHTML = `
-                <div style="padding: 20px; background: white; color: black; width: 320px; border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; box-sizing: border-box;">
+                <div style="padding: 25px; background: white; color: black; width: 320px; border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; box-sizing: border-box;">
                     <img src="icon-192.png" style="width: 80px; height: 80px; border-radius: 8px;">
                     <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #333; margin-top: 10px; font-weight: bold;">Recibo de Venda</p>
                     <div style="border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 12px 0; margin-top: 20px; width: 100%; text-align: left; font-size: 12px; line-height: 1.5;">
                         <p><b>DATA    :</b> ${new Date(sale.created_at).toLocaleString('pt-BR')}</p>
-                        <p><b>CLIENTE :</b> ${sale.customers?.name || 'CONSUMIDOR'}</p>
+                        <p><b>DOC     :</b> #${sale.id}</p>
+                        <p><b>CLIENTE :</b> ${sale.customers?.name || 'CONSUMIDOR FINAL'}</p>
                         <p><b>PAGAMENTO:</b> ${sale.payment_method.toUpperCase()}</p>
                     </div>
                     <div style="margin-top: 20px; border-top: 3px solid #000; padding-top: 10px; width: 100%; display: flex; justify-content: space-between; font-weight: 900; font-size: 24px;">
@@ -571,30 +642,50 @@
             setTimeout(async () => {
                 const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff" });
                 const img = canvas.toDataURL('image/jpeg', 0.95);
-                document.getElementById('receipt-img-box').innerHTML = `<img src="${img}" style="max-width: 100%; margin: 0 auto;">`;
+                document.getElementById('receipt-img-box').innerHTML = `<img src="${img}" style="max-width: 100%; margin: 0 auto; display: block;">`;
                 document.getElementById('receipt-modal').classList.remove('hidden');
+                document.getElementById('btn-receipt-share').onclick = () => shareImg(img);
             }, 600);
         }
-
-        // --- LOG ---
-        function renderSalesLog() {
-            document.getElementById('sales-log').innerHTML = state.sales.map(s => `<div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center"><p class="font-black text-white italic uppercase">${s.customers?.name || 'Avulso'}</p><p class="text-xl font-black text-green-400 italic">R$ ${s.total.toFixed(2)}</p></div>`).join('');
+        async function shareImg(data) {
+            const blob = await (await fetch(data)).blob();
+            const file = new File([blob], 'recibo.jpg', { type: 'image/jpeg' });
+            if (navigator.share) await navigator.share({ files: [file], title: 'Recibo' });
+            else { const a = document.createElement('a'); a.href = data; a.download = 'recibo.jpg'; a.click(); }
         }
+        window.closeReceiptModal = () => document.getElementById('receipt-modal').classList.add('hidden');
 
+        // --- OUTROS ---
+        function renderSalesLog() {
+            document.getElementById('sales-log').innerHTML = state.sales.map(s => `<div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center shadow-lg"><p class="font-black text-white italic uppercase">${s.customers?.name || 'Avulso'}</p><p class="text-xl font-black text-green-400 italic">R$ ${s.total.toFixed(2)}</p></div>`).join('');
+        }
         function updateDebtBadge() {
             const c = state.receivables.filter(r => r.status !== 'pago').length;
             const b = document.getElementById('debt-badge');
             if (b) { b.classList.toggle('hidden', c === 0); b.textContent = c; }
         }
+        window.showAuthModal = (mode) => {
+            const modal = document.getElementById('auth-modal');
+            modal.classList.remove('hidden');
+        };
+        window.closeAuthModal = () => document.getElementById('auth-modal').classList.add('hidden');
+        document.getElementById('auth-modal-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const user = document.getElementById('auth-username').value;
+            const pass = document.getElementById('auth-password').value;
+            ui.loading(true);
+            try {
+                const { data } = await supabase.from('app_users').update({ password: pass }).eq('username', user).select().single();
+                if (data) { ui.notify("✅ Senha atualizada!"); closeAuthModal(); }
+                else ui.notify("Usuário não encontrado", true);
+            } finally { ui.loading(false); }
+        };
 
-        // Auto-login do cache
-        const savedUser = localStorage.getItem('gestao_user');
-        if (savedUser) {
-            state.user = JSON.parse(savedUser);
-            document.getElementById('login-screen').classList.add('hidden');
-            applyPermissions();
-            sync();
-        }
+        // Auto-start
+        const saved = localStorage.getItem('gestao_user');
+        if (saved) state.user = JSON.parse(saved);
+        applyPermissions();
+        sync();
     </script>
 </body>
 </html>
