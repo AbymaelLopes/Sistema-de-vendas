@@ -10,7 +10,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- html2canvas para geração de imagens do comprovativo -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
@@ -22,26 +21,15 @@
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
         
-        /* Menu Lateral (Sidebar) */
-        #sidebar {
-            transition: transform 0.3s ease-in-out;
-            z-index: 50;
-        }
+        #sidebar { transition: transform 0.3s ease-in-out; z-index: 50; }
         @media (max-width: 1024px) {
             #sidebar { transform: translateX(-100%); }
             #sidebar.open { transform: translateX(0); }
         }
 
-        /* Área de renderização do recibo */
         #receipt-render-area { 
-            width: 320px; 
-            background: white; 
-            color: black; 
-            padding: 25px; 
-            font-family: 'Courier New', Courier, monospace; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            width: 320px; background: white; color: black; padding: 25px; 
+            font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center;
         }
         .scroll-custom::-webkit-scrollbar { width: 5px; }
         .scroll-custom::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
@@ -50,13 +38,33 @@
 </head>
 <body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col lg:flex-row">
 
+    <!-- TELA DE LOGIN (SOBREPOSTA) -->
+    <div id="login-screen" class="fixed inset-0 bg-gray-900 z-[10000] flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-black text-white italic">GESTÃO</h1>
+                <p class="text-gray-400 mt-2">Acesso Restrito</p>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Usuário</label>
+                    <input type="text" id="login-username" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 mt-1 text-white outline-none focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Senha</label>
+                    <input type="password" id="login-password" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 mt-1 text-white outline-none focus:border-blue-500" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl mt-4 transition transform active:scale-95 shadow-lg">ENTRAR</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Overlay de Carregamento -->
     <div id="loading-overlay" class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center transition-opacity duration-300 z-[9999]">
         <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
         <p id="loading-text" class="text-gray-400 font-medium">Sincronizando dados...</p>
     </div>
 
-    <!-- Backdrop para Mobile -->
     <div id="sidebar-backdrop" onclick="toggleMenu()" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
 
     <!-- MENU LATERAL -->
@@ -64,7 +72,7 @@
         <div class="mb-8 px-2 flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-black text-white italic">GESTÃO</h1>
-                <p class="text-blue-400 text-[10px] font-bold uppercase tracking-widest">Painel Administrativo</p>
+                <p class="text-blue-400 text-[10px] font-bold uppercase tracking-widest">Controle de Vendas</p>
             </div>
             <button onclick="toggleMenu()" class="lg:hidden text-gray-400 hover:text-white">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -76,47 +84,53 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 Vendas
             </button>
-            <button onclick="showTab('inventory')" id="tab-inventory" class="tab-button px-4 py-3 rounded-xl font-bold text-sm">
+            <button onclick="showTab('inventory')" id="tab-inventory" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-admin">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                 Estoque
             </button>
-            <button onclick="showTab('customers')" id="tab-customers" class="tab-button px-4 py-3 rounded-xl font-bold text-sm">
+            <button onclick="showTab('customers')" id="tab-customers" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-admin">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 116 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 Clientes
             </button>
-            <button onclick="showTab('finance')" id="tab-finance" class="tab-button px-4 py-3 rounded-xl font-bold text-sm justify-between">
+            <button onclick="showTab('finance')" id="tab-finance" class="tab-button px-4 py-3 rounded-xl font-bold text-sm justify-between role-admin">
                 <div class="flex items-center gap-3">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Financeiro
                 </div>
                 <span id="debt-badge" class="hidden bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black">0</span>
             </button>
-            <button onclick="showTab('reports')" id="tab-reports" class="tab-button px-4 py-3 rounded-xl font-bold text-sm">
+            <button onclick="showTab('reports')" id="tab-reports" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-admin">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 Relatórios
             </button>
+            <!-- MENU SÓ PARA GERENTE -->
+            <button onclick="showTab('users')" id="tab-users" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-gerente">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                Usuários
+            </button>
         </nav>
 
-        <div class="mt-auto pt-4 border-t border-gray-700 text-[10px] text-gray-500 uppercase tracking-widest text-center">
-            v 2.5.0
+        <div class="mt-auto flex flex-col gap-2">
+            <div class="px-4 py-2 bg-gray-900/50 rounded-lg">
+                <p id="logged-user-name" class="text-xs font-black text-blue-400 uppercase italic"></p>
+                <p id="logged-user-role" class="text-[10px] text-gray-500 uppercase font-bold"></p>
+            </div>
+            <button onclick="logout()" class="px-4 py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-xl font-bold text-xs uppercase transition">Sair do Sistema</button>
         </div>
     </aside>
 
     <!-- CONTEÚDO PRINCIPAL -->
     <div class="flex-1 flex flex-col min-w-0">
-        <!-- Header Mobile -->
         <header class="lg:hidden bg-gray-800 border-b border-gray-700 p-4 flex items-center justify-between sticky top-0 z-30">
-            <button onclick="toggleMenu()" class="text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-            </button>
+            <button onclick="toggleMenu()" class="text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
             <h1 class="text-xl font-black text-white italic">GESTÃO</h1>
             <div class="w-6"></div>
         </header>
 
         <main class="p-4 md:p-8 flex-1">
-            <!-- SEÇÕES DE CONTEÚDO (VENDAS, ESTOQUE, ETC) -->
+            <!-- ABA VENDAS -->
             <section id="view-sales" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="card space-y-6 shadow-2xl">
+                <div class="card space-y-6">
                     <h2 class="text-xl font-bold text-white border-b border-gray-700 pb-3 italic uppercase">Ponto de Venda</h2>
                     <div class="space-y-4">
                         <input type="search" id="sale-search-prod" placeholder="🔍 Pesquisar produto..." class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none">
@@ -127,7 +141,6 @@
                         </div>
                         <button id="btn-add-cart" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg transition transform active:scale-95 uppercase text-xs tracking-widest">Adicionar ao Carrinho</button>
                     </div>
-
                     <div class="pt-6 border-t border-gray-700">
                         <div id="cart-list" class="space-y-2 min-h-[80px] scroll-custom overflow-y-auto max-h-[250px]"></div>
                         <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-700">
@@ -143,11 +156,12 @@
                                 <option value="prazo" class="text-orange-400 font-bold">🕒 Venda a Prazo (Fiado)</option>
                             </select>
                         </div>
-                        <button id="btn-finish-sale" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-2xl shadow-xl transition disabled:opacity-30 uppercase tracking-widest">Finalizar Venda</button>
+                        <!-- Botão Finalizar: Escondido para 'usuario' -->
+                        <button id="btn-finish-sale" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-2xl shadow-xl transition disabled:opacity-30 uppercase tracking-widest role-can-finish">Finalizar Venda</button>
                     </div>
                 </div>
-
-                <div class="card">
+                <!-- Histórico: Escondido para 'usuario' -->
+                <div class="card role-can-see-history">
                     <h2 class="text-xl font-bold text-white border-b border-gray-700 pb-3 mb-4 italic uppercase">Histórico</h2>
                     <div id="sales-log" class="space-y-4 scroll-custom overflow-y-auto max-h-[600px]"></div>
                 </div>
@@ -155,109 +169,81 @@
 
             <!-- ABA ESTOQUE -->
             <section id="view-inventory" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="card lg:col-span-1 h-fit shadow-2xl">
-                    <h2 class="text-xl font-bold text-white mb-6 italic uppercase">Produto</h2>
+                <div class="card lg:col-span-1 h-fit shadow-2xl role-can-modify">
+                    <h2 class="text-xl font-bold text-white mb-6 italic uppercase">Gerir Produto</h2>
                     <form id="form-product" class="space-y-4">
                         <input type="hidden" id="p-id">
-                        <input type="text" id="p-name" placeholder="Descrição do Produto" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required>
+                        <input type="text" id="p-name" placeholder="Descrição" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-bold" required>
                         <div class="grid grid-cols-2 gap-4">
-                            <div><label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Custo (R$)</label>
-                            <input type="number" id="p-cost" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-bold" required></div>
-                            <div><label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Markup (%)</label>
-                            <input type="number" id="p-markup" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-bold"></div>
+                            <div><input type="number" id="p-cost" step="0.01" placeholder="Custo (R$)" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3" required></div>
+                            <div><input type="number" id="p-markup" step="0.01" placeholder="Markup (%)" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3"></div>
                         </div>
-                        <div><label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Venda (R$)</label>
-                        <input type="number" id="p-price" step="0.01" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-black text-blue-400" required></div>
-                        <input type="number" id="p-stock" placeholder="Estoque Inicial" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-bold" required>
-                        <div class="flex gap-2">
-                            <button type="submit" id="btn-save-prod" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-xl transition">Guardar</button>
-                            <button type="button" id="btn-cancel-prod" class="hidden bg-gray-600 hover:bg-gray-700 px-4 rounded-xl">✖</button>
-                        </div>
+                        <input type="number" id="p-price" step="0.01" placeholder="Venda (R$)" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 font-black text-blue-400" required>
+                        <input type="number" id="p-stock" placeholder="Estoque Atual" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3" required>
+                        <div class="flex gap-2"><button type="submit" class="flex-1 bg-blue-600 py-3 rounded-xl font-black">GUARDAR</button><button type="button" id="btn-cancel-prod" class="hidden bg-gray-600 px-4 rounded-xl">✖</button></div>
                     </form>
                 </div>
-                <div class="card lg:col-span-2 shadow-inner">
-                    <input type="search" id="inv-search" placeholder="🔍 Filtrar estoque..." class="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 mb-6 shadow-inner outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="card lg:col-span-2">
+                    <input type="search" id="inv-search" placeholder="🔍 Filtrar..." class="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 mb-6 shadow-inner outline-none">
                     <div id="inv-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 </div>
             </section>
 
             <!-- ABA FINANCEIRO -->
-            <section id="view-finance" class="hidden">
-                <div class="card">
-                    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 border-b border-gray-700 pb-6">
-                        <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter">Contas a Receber</h2>
-                        <div class="bg-red-500/10 px-6 py-3 rounded-2xl border border-red-500/30 text-center">
-                            <p class="text-[10px] text-red-400 font-black uppercase">Saldo Pendente</p>
-                            <p id="total-pending-amount" class="text-3xl font-black text-red-500 tracking-tighter">R$ 0,00</p>
-                        </div>
-                    </div>
-                    <div id="receivables-container" class="space-y-4"></div>
-                </div>
-            </section>
+            <section id="view-finance" class="hidden"><div class="card"><h2 class="text-2xl font-black text-white italic uppercase mb-8">Contas a Receber</h2><div id="receivables-container" class="space-y-4"></div></div></section>
 
-            <!-- ABA CLIENTES -->
-            <section id="view-customers" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="card h-fit shadow-2xl">
-                    <h2 class="text-xl font-bold text-white mb-6 italic uppercase">Novo Cliente</h2>
-                    <form id="form-customer" class="space-y-4">
-                        <input type="hidden" id="c-id">
-                        <input type="text" id="c-name" placeholder="Nome do Cliente" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required>
-                        <input type="tel" id="c-phone" placeholder="WhatsApp / Telefone" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold">
-                        <button type="submit" id="btn-save-cust" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl mt-4">Registar Cliente</button>
+            <!-- ABA USUÁRIOS (NOVO) -->
+            <section id="view-users" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="card h-fit">
+                    <h2 class="text-xl font-bold text-white mb-6 italic uppercase">Novo Usuário</h2>
+                    <form id="form-user" class="space-y-4">
+                        <input type="text" id="u-username" placeholder="Nome de Usuário" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required>
+                        <input type="password" id="u-password" placeholder="Senha" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required>
+                        <select id="u-role" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold">
+                            <option value="usuario">Usuário Comum (Só Vendas)</option>
+                            <option value="administrador">Administrador (Visualizador)</option>
+                            <option value="gerente">Gerente (Acesso Total)</option>
+                        </select>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl mt-4">Criar Usuário</button>
                     </form>
                 </div>
-                <div class="card lg:col-span-2 shadow-inner">
-                    <div id="cust-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                <div class="card lg:col-span-2">
+                    <div id="user-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 </div>
             </section>
+            
+            <!-- ABA CLIENTES/RELATÓRIOS -->
+            <section id="view-customers" class="hidden"><div id="cust-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></section>
+            <section id="view-reports" class="hidden space-y-8"><div id="rep-summary"></div></section>
 
-            <!-- ABA RELATÓRIOS -->
-            <section id="view-reports" class="hidden space-y-8">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="card border-l-4 border-cyan-500 shadow-lg"><p class="text-xs font-bold text-gray-500 uppercase">Lucro Real</p><p id="rep-profit" class="text-3xl font-black text-cyan-400 mt-2">R$ 0,00</p></div>
-                    <div class="card border-l-4 border-green-500 shadow-lg"><p class="text-xs font-bold text-gray-500 uppercase">Faturamento Bruto</p><p id="rep-revenue" class="text-3xl font-black text-green-400 mt-2">R$ 0,00</p></div>
-                    <div class="card border-l-4 border-red-500 shadow-lg"><p class="text-xs font-bold text-gray-500 uppercase">A Receber</p><p id="rep-debt" class="text-3xl font-black text-red-500 mt-2">R$ 0,00</p></div>
-                    <div class="card border-l-4 border-blue-500 shadow-lg"><p class="text-xs font-bold text-gray-500 uppercase">Qtd Vendas</p><p id="rep-count" class="text-3xl font-black text-blue-400 mt-2">0</p></div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="card shadow-xl"><h3 class="font-bold text-gray-400 mb-6 uppercase text-xs tracking-widest font-black">Formas de Pagamento</h3><div class="chart-container"><canvas id="chart-payments"></canvas></div></div>
-                    <div class="card shadow-xl"><h3 class="font-bold text-gray-400 mb-6 uppercase text-xs tracking-widest font-black">Fluxo de Receita</h3><div class="chart-container"><canvas id="chart-timeline"></canvas></div></div>
-                </div>
-            </section>
         </main>
     </div>
 
     <!-- MODAL DO RECIBO -->
     <div id="receipt-modal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 z-[1000]">
         <div class="max-w-sm w-full flex flex-col items-center justify-center">
-            <div id="receipt-img-box" class="border-4 border-gray-800 rounded-2xl mb-8 overflow-hidden bg-white shadow-2xl flex items-center justify-center mx-auto"></div>
+            <div id="receipt-img-box" class="border-4 border-gray-800 rounded-2xl mb-8 overflow-hidden bg-white shadow-2xl"></div>
             <div class="flex flex-col gap-3 w-full">
-                <button id="btn-receipt-share" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest">Compartilhar Recibo</button>
-                <button onclick="closeReceiptModal()" class="w-full bg-white/10 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest">Fechar</button>
+                <button id="btn-receipt-share" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-black text-sm uppercase">Compartilhar Recibo</button>
+                <button onclick="closeReceiptModal()" class="w-full bg-white/10 text-white py-3 rounded-xl font-bold text-xs uppercase">Fechar</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL FINANCEIRO -->
+    <!-- MODAL BAIXA FINANCEIRA -->
     <div id="modal-payment" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999]">
         <div class="card w-full max-w-md shadow-2xl border-2 border-blue-500/20">
-            <h2 class="text-xl font-black text-white mb-2 italic uppercase">Confirmar Pagamento</h2>
-            <p id="payment-debt-info" class="text-sm text-gray-400 mb-8 border-l-4 border-blue-500 pl-4"></p>
-            <div class="space-y-6">
-                <input type="number" id="pay-input-amount" step="0.01" class="w-full bg-gray-800 border-2 border-gray-700 rounded-2xl p-5 text-4xl font-black text-green-400 outline-none focus:border-green-500 transition">
-                <div class="flex gap-4">
-                    <button onclick="closePaymentModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-4 rounded-xl font-bold transition uppercase text-xs">Cancelar</button>
-                    <button id="btn-pay-confirm" class="flex-[2] bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-black shadow-lg uppercase text-xs">Registar Baixa</button>
-                </div>
+            <h2 class="text-xl font-black text-white mb-6 italic uppercase">Confirmar Recebimento</h2>
+            <input type="number" id="pay-input-amount" step="0.01" class="w-full bg-gray-800 border-2 border-gray-700 rounded-2xl p-5 text-4xl font-black text-green-400 outline-none focus:border-green-500 transition">
+            <div class="flex gap-4 mt-6">
+                <button onclick="closePaymentModal()" class="flex-1 bg-gray-700 py-4 rounded-xl font-bold transition text-xs">CANCELAR</button>
+                <button id="btn-pay-confirm" class="flex-[2] bg-green-600 py-4 rounded-xl font-black uppercase text-xs">Baixar</button>
             </div>
         </div>
     </div>
 
-    <!-- ÁREA DE RENDERIZAÇÃO INVISÍVEL -->
     <div id="receipt-render-area" class="absolute -left-[9999px] top-0"></div>
-
-    <!-- Notificações -->
-    <div id="notification" class="fixed bottom-10 left-1/2 -translate-x-1/2 text-white py-4 px-10 rounded-2xl shadow-2xl opacity-0 transition-all duration-500 z-[10001] font-black text-sm pointer-events-none uppercase tracking-widest"></div>
+    <div id="notification" class="fixed bottom-10 left-1/2 -translate-x-1/2 text-white py-4 px-10 rounded-2xl shadow-2xl opacity-0 transition-all duration-500 z-[10001] font-black text-sm pointer-events-none uppercase"></div>
 
     <script type="module">
         // --- CONFIGURAÇÃO SUPABASE ---
@@ -267,7 +253,7 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let state = {
-            products: [], customers: [], sales: [], receivables: [], cart: [], activeTab: 'sales', charts: {}
+            products: [], customers: [], sales: [], receivables: [], cart: [], users: [], user: null
         };
 
         const ui = {
@@ -280,6 +266,48 @@
             }
         };
 
+        // --- AUTH LOGIC ---
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            const { data, error } = await supabase.from('app_users').select('*').eq('username', username).eq('password', password).single();
+            
+            if (data) {
+                state.user = data;
+                localStorage.setItem('gestao_user', JSON.stringify(data));
+                document.getElementById('login-screen').classList.add('hidden');
+                applyPermissions();
+                await sync();
+            } else {
+                ui.notify("Dados Inválidos!", true);
+            }
+        };
+
+        window.logout = () => {
+            localStorage.removeItem('gestao_user');
+            location.reload();
+        };
+
+        function applyPermissions() {
+            const role = state.user.role;
+            document.getElementById('logged-user-name').textContent = state.user.username;
+            document.getElementById('logged-user-role').textContent = role;
+
+            // Gerente vê tudo
+            // Admin vê tudo, mas não altera
+            // Usuario só vê vendas
+
+            if (role === 'usuario') {
+                document.querySelectorAll('.role-admin, .role-gerente').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.role-can-finish, .role-can-see-history').forEach(el => el.classList.add('hidden'));
+            } else if (role === 'administrador') {
+                document.querySelectorAll('.role-gerente').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.role-can-modify').forEach(el => el.classList.add('hidden'));
+            }
+        }
+
         // --- NAVEGAÇÃO ---
         window.toggleMenu = () => {
             const sidebar = document.getElementById('sidebar');
@@ -291,15 +319,15 @@
         window.showTab = (id) => {
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
             document.getElementById(`view-${id}`).classList.remove('hidden');
-            if (window.innerWidth < 1024 && document.getElementById('sidebar').classList.contains('open')) toggleMenu();
+            if (window.innerWidth < 1024) toggleMenu();
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('tab-active'));
-            const activeBtn = document.getElementById(`tab-${id}`);
-            if (activeBtn) activeBtn.classList.add('tab-active');
-            if(id === 'reports') renderReports();
+            document.getElementById(`tab-${id}`).classList.add('tab-active');
+            if(id === 'users' && state.user.role === 'gerente') syncUsers();
         };
 
         // --- SINCRONIZAÇÃO TOTAL ---
         async function sync() {
+            if (!state.user) return;
             ui.loading(true);
             try {
                 const [pResp, cResp, sResp, rResp] = await Promise.all([
@@ -313,14 +341,38 @@
                 state.sales = sResp.data || [];
                 state.receivables = rResp.data || [];
                 render();
-            } catch(e) { console.error(e); ui.notify("Falha na ligação", true); }
-            finally { ui.loading(false); }
+            } finally { ui.loading(false); }
         }
+
+        async function syncUsers() {
+            const { data } = await supabase.from('app_users').select('*').order('username');
+            state.users = data || [];
+            document.getElementById('user-list').innerHTML = state.users.map(u => `
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center">
+                    <div><p class="font-black text-white">${u.username}</p><p class="text-xs text-blue-400 uppercase font-bold">${u.role}</p></div>
+                    <button onclick="deleteUser(${u.id})" class="text-red-500 font-black">APAGAR</button>
+                </div>`).join('');
+        }
+
+        document.getElementById('form-user').onsubmit = async (e) => {
+            e.preventDefault();
+            await supabase.from('app_users').insert({
+                username: document.getElementById('u-username').value,
+                password: document.getElementById('u-password').value,
+                role: document.getElementById('u-role').value
+            });
+            e.target.reset(); syncUsers(); ui.notify("Usuário Criado");
+        };
+
+        window.deleteUser = async (id) => {
+            if (id === state.user.id) return ui.notify("Não pode apagar-se!", true);
+            await supabase.from('app_users').delete().eq('id', id);
+            syncUsers();
+        };
 
         function render() {
             renderPDV();
             renderInventory();
-            renderCustomers();
             renderFinance();
             renderSalesLog();
             updateDebtBadge();
@@ -338,27 +390,15 @@
         document.getElementById('btn-add-cart').onclick = () => {
             const p = state.products.find(x => x.id == document.getElementById('sale-prod-select').value);
             const qty = parseInt(document.getElementById('sale-qty').value);
-            const disc = parseFloat(document.getElementById('sale-disc').value) || 0;
             if (!p || qty < 1) return;
-            if (qty > p.stock) return ui.notify("Stock Insuficiente!", true);
-            state.cart.push({ ...p, quantity: qty, discount: disc });
+            state.cart.push({ ...p, quantity: qty, discount: parseFloat(document.getElementById('sale-disc').value) || 0 });
             renderCart();
-            ui.notify("Item Adicionado");
         };
 
         function renderCart() {
             const total = state.cart.reduce((acc, i) => acc + (i.price * i.quantity) - i.discount, 0);
             document.getElementById('cart-total').textContent = `R$ ${total.toFixed(2)}`;
-            document.getElementById('cart-list').innerHTML = state.cart.map((i, idx) => `
-                <div class="flex justify-between bg-gray-800 p-3 rounded-xl border border-gray-700/50 shadow-inner">
-                    <div class="text-sm font-bold text-white uppercase tracking-tighter">${i.quantity}x ${i.name}</div>
-                    <div class="flex gap-4 items-center">
-                        <span class="font-black text-green-400">R$ ${((i.price * i.quantity) - i.discount).toFixed(2)}</span>
-                        <button onclick="removeFromCart(${idx})" class="text-gray-500 hover:text-red-500 transition font-black">✖</button>
-                    </div>
-                </div>
-            `).join('') || '<div class="text-center py-6 text-gray-700 font-bold uppercase text-[10px]">Carrinho Vazio</div>';
-            document.getElementById('btn-finish-sale').disabled = state.cart.length === 0;
+            document.getElementById('cart-list').innerHTML = state.cart.map((i, idx) => `<div class="flex justify-between bg-gray-800 p-3 rounded-xl border border-gray-700/50"><span>${i.quantity}x ${i.name}</span><button onclick="removeFromCart(${idx})" class="text-red-500">✖</button></div>`).join('');
         }
         window.removeFromCart = (idx) => { state.cart.splice(idx, 1); renderCart(); };
 
@@ -366,159 +406,42 @@
             const method = document.getElementById('sale-payment-method').value;
             const cid = document.getElementById('sale-cust-select').value;
             const total = state.cart.reduce((acc, i) => acc + (i.price * i.quantity) - i.discount, 0);
-            if (method === 'prazo' && !cid) return ui.notify("Selecione um Cliente!", true);
             ui.loading(true);
             try {
                 const customerId = cid ? parseInt(cid) : null;
-                const { data: newSale, error: sErr } = await supabase.from('sales').insert([{
-                    customer_id: customerId, total, payment_method: method, items: state.cart, status: 'ativa'
-                }]).select().single();
-                if (sErr) throw sErr;
-                if (method === 'prazo') {
-                    await supabase.from('accounts_receivable').insert([{
-                        sale_id: newSale.id, customer_id: customerId, total_amount: total, paid_amount: 0, status: 'pendente'
-                    }]);
-                }
+                const { data: newSale, error } = await supabase.from('sales').insert([{ customer_id: customerId, total, payment_method: method, items: state.cart, status: 'ativa' }]).select().single();
+                if (method === 'prazo') await supabase.from('accounts_receivable').insert([{ sale_id: newSale.id, customer_id: customerId, total_amount: total, paid_amount: 0, status: 'pendente' }]);
                 for (const item of state.cart) {
                     await supabase.from('products').update({ stock: item.stock - item.quantity }).eq('id', item.id);
                 }
-                state.cart = [];
-                renderCart();
-                await sync();
-                ui.notify("✅ Finalizado!");
-                generateReceiptImg(newSale);
-            } catch(e) { ui.notify("Erro ao finalizar", true); }
-            finally { ui.loading(false); }
-        };
-
-        // --- CANCELAR ---
-        window.cancelSale = async (sale) => {
-            if (!confirm(`Anular venda #${sale.id}? Produtos voltam ao estoque.`)) return;
-            ui.loading(true);
-            try {
-                await supabase.from('sales').update({ status: 'cancelada' }).eq('id', sale.id);
-                for (const item of sale.items) {
-                    const p = state.products.find(x => x.id === item.id);
-                    if (p) await supabase.from('products').update({ stock: p.stock + item.quantity }).eq('id', p.id);
-                }
-                if (sale.payment_method === 'prazo') await supabase.from('accounts_receivable').delete().eq('sale_id', sale.id);
-                await sync(); ui.notify("✅ Venda Cancelada!");
-            } catch(e) { ui.notify("Erro ao cancelar", true); }
+                state.cart = []; renderCart(); await sync(); generateReceiptImg(newSale);
+            } catch(e) { console.error(e); }
             finally { ui.loading(false); }
         };
 
         // --- ESTOQUE ---
-        const costIn = document.getElementById('p-cost');
-        const markIn = document.getElementById('p-markup');
-        const priceIn = document.getElementById('p-price');
-        costIn.oninput = markIn.oninput = () => {
-            const cost = parseFloat(costIn.value) || 0;
-            const mark = parseFloat(markIn.value) || 0;
-            if (cost > 0 && mark > 0) priceIn.value = (cost * (1 + mark/100)).toFixed(2);
-        };
-        priceIn.oninput = () => {
-            const cost = parseFloat(costIn.value) || 0;
-            const price = parseFloat(priceIn.value) || 0;
-            if (cost > 0 && price > cost) markIn.value = (((price/cost)-1)*100).toFixed(2);
-        };
-        document.getElementById('form-product').onsubmit = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('p-id').value;
-            const data = {
-                name: document.getElementById('p-name').value, cost_price: parseFloat(costIn.value),
-                markup: parseFloat(markIn.value), price: parseFloat(priceIn.value), stock: parseInt(document.getElementById('p-stock').value)
-            };
-            ui.loading(true);
-            try {
-                const { error } = id ? await supabase.from('products').update(data).eq('id', id) : await supabase.from('products').insert(data);
-                if (!error) { e.target.reset(); document.getElementById('p-id').value = ''; await sync(); ui.notify("✅ Salvo!"); }
-            } finally { ui.loading(false); }
-        };
-        window.editProduct = (id) => {
-            const p = state.products.find(x => x.id == id);
-            document.getElementById('p-id').value = p.id;
-            document.getElementById('p-name').value = p.name;
-            costIn.value = p.cost_price; markIn.value = p.markup; priceIn.value = p.price;
-            document.getElementById('p-stock').value = p.stock;
-            document.getElementById('btn-cancel-prod').classList.remove('hidden');
-        };
-
         function renderInventory() {
             const term = document.getElementById('inv-search').value.toLowerCase();
             document.getElementById('inv-list').innerHTML = state.products.filter(p => p.name.toLowerCase().includes(term)).map(p => `
-                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 flex justify-between items-center group transition shadow-lg">
-                    <div>
-                        <p class="font-black text-white group-hover:text-blue-400 transition tracking-tighter uppercase italic">${p.name}</p>
-                        <p class="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-widest">STOCK: <span class="${p.stock < 5 ? 'text-red-500' : 'text-gray-300'}">${p.stock}</span> | Custo: R$ ${p.cost_price?.toFixed(2)}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-2xl font-black text-blue-400 tracking-tighter">R$ ${p.price.toFixed(2)}</p>
-                        <button onclick="editProduct(${p.id})" class="text-[9px] font-black text-gray-500 uppercase mt-2 hover:text-white transition tracking-widest">Editar</button>
-                    </div>
-                </div>
-            `).join('') || '<p class="text-center col-span-2 text-gray-700 py-10 font-black uppercase">Vazio</p>';
+                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 flex justify-between items-center group transition">
+                    <div><p class="font-black text-white italic transition tracking-tighter uppercase">${p.name}</p><p class="text-[10px] text-gray-500 mt-2 font-bold uppercase tracking-widest">STOCK: ${p.stock} | Custo: R$ ${p.cost_price}</p></div>
+                    <div class="text-right"><p class="text-2xl font-black text-blue-400 tracking-tighter italic">R$ ${p.price.toFixed(2)}</p></div>
+                </div>`).join('');
         }
-        document.getElementById('inv-search').oninput = renderInventory;
 
         // --- FINANCEIRO ---
         function renderFinance() {
             const active = state.receivables.filter(r => r.status !== 'pago');
-            let totalPending = 0;
+            let total = 0;
             document.getElementById('receivables-container').innerHTML = active.map(r => {
-                const rest = r.total_amount - r.paid_amount;
-                totalPending += rest;
+                const rest = r.total_amount - r.paid_amount; total += rest;
                 return `
-                <div class="bg-gray-800 p-5 rounded-2xl border-l-8 ${r.status === 'parcial' ? 'border-yellow-500' : 'border-red-600'} flex flex-col md:flex-row justify-between items-center gap-4 shadow-xl">
-                    <div class="w-full md:w-auto">
-                        <h4 class="font-black text-white text-xl uppercase italic tracking-tighter">${r.customers?.name || 'Cliente Oculto'}</h4>
-                        <div class="flex gap-4 mt-2 text-xs font-bold uppercase text-gray-500 tracking-tighter">
-                            <span>Total: R$ ${r.total_amount.toFixed(2)}</span>
-                            <span class="text-green-500">Pago: R$ ${r.paid_amount.toFixed(2)}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-6 w-full md:w-auto bg-black/30 p-4 rounded-2xl border border-white/5 shadow-inner">
-                        <div class="text-right">
-                            <p class="text-[9px] font-black text-gray-500 uppercase tracking-widest">Saldo</p>
-                            <p class="text-2xl font-black text-red-500 italic tracking-tighter">R$ ${rest.toFixed(2)}</p>
-                        </div>
-                        <button onclick="openPaymentModal(${r.id}, ${rest})" class="bg-blue-600 hover:bg-blue-700 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition transform active:scale-90">Receber</button>
-                    </div>
+                <div class="bg-gray-800 p-6 rounded-2xl border-l-8 ${r.status === 'parcial' ? 'border-yellow-500' : 'border-red-600'} flex justify-between items-center">
+                    <div><h4 class="font-black text-white uppercase italic tracking-tighter">${r.customers?.name || 'Oculto'}</h4></div>
+                    <div class="flex items-center gap-4"><p class="text-2xl font-black text-red-500 italic">R$ ${rest.toFixed(2)}</p></div>
                 </div>`;
-            }).join('') || '<div class="text-center py-20 text-gray-800 font-black uppercase opacity-50">Nada pendente</div>';
-            document.getElementById('total-pending-amount').textContent = `R$ ${totalPending.toFixed(2)}`;
-        }
-        let currentDebtId = null;
-        window.openPaymentModal = (id, rest) => {
-            currentDebtId = id;
-            document.getElementById('payment-debt-info').textContent = `Valor devido: R$ ${rest.toFixed(2)}`;
-            document.getElementById('pay-input-amount').value = rest.toFixed(2);
-            document.getElementById('modal-payment').classList.remove('hidden');
-        };
-        window.closePaymentModal = () => document.getElementById('modal-payment').classList.add('hidden');
-        document.getElementById('btn-pay-confirm').onclick = async () => {
-            const amount = parseFloat(document.getElementById('pay-input-amount').value);
-            const r = state.receivables.find(x => x.id == currentDebtId);
-            const newPaid = r.paid_amount + amount;
-            const newStatus = newPaid >= (r.total_amount - 0.01) ? 'pago' : 'parcial';
-            ui.loading(true);
-            try {
-                await supabase.from('accounts_receivable').update({ paid_amount: newPaid, status: newStatus }).eq('id', currentDebtId);
-                closePaymentModal(); ui.notify("✅ Pago!"); await sync();
-            } finally { ui.loading(false); }
-        };
-
-        // --- CLIENTES ---
-        document.getElementById('form-customer').onsubmit = async (e) => {
-            e.preventDefault();
-            await supabase.from('customers').insert({ name: document.getElementById('c-name').value, phone: document.getElementById('c-phone').value });
-            e.target.reset(); await sync(); ui.notify("✅ Cliente Registado");
-        };
-        function renderCustomers() {
-            document.getElementById('cust-list').innerHTML = state.customers.map(c => `
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center shadow-md">
-                    <div><p class="font-black text-white uppercase italic tracking-tighter transition">${c.name}</p><p class="text-xs text-gray-500 font-bold">${c.phone || 'S/ Fone'}</p></div>
-                </div>
-            `).join('') || '<p class="text-center py-10 font-black uppercase text-gray-800">Vazio</p>';
+            }).join('');
+            document.getElementById('total-pending-amount').textContent = `R$ ${total.toFixed(2)}`;
         }
 
         // --- RECIBO ---
@@ -526,105 +449,45 @@
             const area = document.getElementById('receipt-render-area');
             area.innerHTML = `
                 <div style="padding: 20px; background: white; color: black; width: 320px; border: 1px solid #eee; display: flex; flex-direction: column; align-items: center; box-sizing: border-box;">
-                    <div style="text-align: center; margin-bottom: 20px; width: 100%;">
-                        <img src="icon-192.png" style="width: 80px; height: 80px; margin: 0 auto; display: block; border-radius: 8px;">
-                        <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #333; margin-top: 10px; font-weight: bold;">Recibo de Venda</p>
+                    <img src="icon-192.png" style="width: 80px; height: 80px; border-radius: 8px;">
+                    <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #333; margin-top: 10px; font-weight: bold;">Recibo de Venda</p>
+                    <div style="border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 12px 0; margin-top: 20px; width: 100%; text-align: left; font-size: 12px; line-height: 1.5;">
+                        <p><b>DATA    :</b> ${new Date(sale.created_at).toLocaleString('pt-BR')}</p>
+                        <p><b>CLIENTE :</b> ${sale.customers?.name || 'CONSUMIDOR'}</p>
+                        <p><b>PAGAMENTO:</b> ${sale.payment_method.toUpperCase()}</p>
                     </div>
-                    <div style="border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 12px 0; margin-bottom: 20px; width: 100%; text-align: left; font-size: 12px; line-height: 1.5;">
-                        <p style="margin: 3px 0;"><b>DATA    :</b> ${new Date(sale.created_at).toLocaleString('pt-BR')}</p>
-                        <p style="margin: 3px 0;"><b>DOC     :</b> #${sale.id}</p>
-                        <p style="margin: 3px 0;"><b>CLIENTE :</b> ${sale.customers?.name || 'CONSUMIDOR FINAL'}</p>
-                        <p style="margin: 3px 0;"><b>PAGAMENTO:</b> ${sale.payment_method === 'prazo' ? 'A PRAZO' : sale.payment_method.toUpperCase()}</p>
+                    <div style="margin-top: 20px; border-top: 3px solid #000; padding-top: 10px; width: 100%; display: flex; justify-content: space-between; font-weight: 900; font-size: 24px;">
+                        <span>TOTAL</span><span>R$ ${sale.total.toFixed(2)}</span>
                     </div>
-                    <div style="font-size: 12px; width: 100%; text-align: left; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 8px; font-weight: bold; text-transform: uppercase;">
-                            <span>Descrição</span>
-                            <span>Valor</span>
-                        </div>
-                        ${sale.items.map(i => `
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                <span style="flex: 1; padding-right: 10px;">${i.quantity}x ${i.name.substring(0, 24)}</span>
-                                <span style="font-weight: bold; white-space: nowrap;">R$ ${((i.price * i.quantity) - i.discount).toFixed(2)}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div style="border-top: 3px solid #000; padding-top: 10px; width: 100%; display: flex; justify-content: space-between; font-weight: 900; font-size: 24px; color: #000;">
-                        <span>TOTAL</span>
-                        <span>R$ ${sale.total.toFixed(2)}</span>
-                    </div>
-                    <div style="margin-top: 45px; font-size: 11px; color: #000; font-weight: bold; text-align: center; width: 100%;">
-                        Obrigado por comprar conosco!<br>@clickart_brindes
-                    </div>
-                </div>
-            `;
+                    <div style="margin-top: 45px; font-size: 11px; font-weight: bold; text-align: center;">@clickart_brindes</div>
+                </div>`;
             setTimeout(async () => {
-                try {
-                    const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff", useCORS: true });
-                    const img = canvas.toDataURL('image/jpeg', 0.95);
-                    document.getElementById('receipt-img-box').innerHTML = `<img src="${img}" style="max-width: 100%; margin: 0 auto; display: block;">`;
-                    document.getElementById('receipt-modal').classList.remove('hidden');
-                    document.getElementById('btn-receipt-share').onclick = () => shareImg(img);
-                } catch (err) { ui.notify("Erro ao gerar imagem", true); }
+                const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff" });
+                const img = canvas.toDataURL('image/jpeg', 0.95);
+                document.getElementById('receipt-img-box').innerHTML = `<img src="${img}" style="max-width: 100%; margin: 0 auto;">`;
+                document.getElementById('receipt-modal').classList.remove('hidden');
             }, 600);
         }
-        async function shareImg(data) {
-            try {
-                const blob = await (await fetch(data)).blob();
-                const file = new File([blob], 'comprovante.jpg', { type: 'image/jpeg' });
-                if (navigator.share) await navigator.share({ files: [file], title: 'Recibo' });
-                else { const a = document.createElement('a'); a.href = data; a.download = 'comprovante.jpg'; a.click(); }
-            } catch (e) { ui.notify("Erro ao compartilhar"); }
-        }
-        window.closeReceiptModal = () => document.getElementById('receipt-modal').classList.add('hidden');
 
         // --- LOG ---
         function renderSalesLog() {
-            document.getElementById('sales-log').innerHTML = state.sales.map(s => {
-                const isC = s.status === 'cancelada';
-                return `
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center transition shadow-lg ${isC ? 'sale-cancelled' : ''}">
-                    <div>
-                        <p class="font-black text-white text-sm uppercase italic tracking-tighter ${isC ? 'line-through' : ''}">${s.customers?.name || 'Avulso'}</p>
-                        <p class="text-[9px] text-gray-500 font-bold uppercase mt-1 tracking-widest">${new Date(s.created_at).toLocaleString()}</p>
-                        <p class="text-[9px] text-blue-400 font-black mt-1 uppercase">🏷️ ${isC ? '❌ CANCELADA' : s.payment_method}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xl font-black text-green-400 tracking-tighter italic ${isC ? 'line-through' : ''}">R$ ${s.total.toFixed(2)}</p>
-                        <div class="flex gap-2 mt-2 justify-end">
-                            ${!isC ? `
-                                <button onclick='window.reprintSale(${JSON.stringify(s)})' class="text-[9px] bg-gray-700 px-3 py-1.5 rounded-lg text-white font-black mt-2 uppercase transition shadow-md">Recibo</button>
-                                <button onclick='window.cancelSale(${JSON.stringify(s)})' class="text-[9px] bg-red-900/50 px-3 py-1.5 rounded-lg text-red-200 font-black mt-2 uppercase transition shadow-md">Cancelar</button>
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>`}).join('');
-        }
-        window.reprintSale = (s) => generateReceiptImg(s);
-
-        // --- RELATÓRIOS ---
-        function renderReports() {
-            const actives = state.sales.filter(s => s.status === 'ativa');
-            const rev = actives.reduce((acc, s) => acc + s.total, 0);
-            const deb = state.receivables.filter(r => r.status !== 'pago').reduce((acc, r) => acc + (r.total_amount - r.paid_amount), 0);
-            const pro = actives.reduce((acc, s) => acc + s.items.reduce((pA, i) => pA + ((i.price * i.quantity) - i.discount) - (i.cost_price * i.quantity), 0), 0);
-            document.getElementById('rep-profit').textContent = `R$ ${pro.toFixed(2)}`;
-            document.getElementById('rep-revenue').textContent = `R$ ${rev.toFixed(2)}`;
-            document.getElementById('rep-debt').textContent = `R$ ${deb.toFixed(2)}`;
-            document.getElementById('rep-count').textContent = actives.length;
-            const payTypes = actives.reduce((acc, s) => { acc[s.payment_method] = (acc[s.payment_method] || 0) + s.total; return acc; }, {});
-            const ctxP = document.getElementById('chart-payments').getContext('2d');
-            if(state.charts.p) state.charts.p.destroy();
-            state.charts.p = new Chart(ctxP, { type: 'doughnut', data: { labels: Object.keys(payTypes), datasets: [{ data: Object.values(payTypes), backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { weight: 'bold', size: 10 } } } } } });
+            document.getElementById('sales-log').innerHTML = state.sales.map(s => `<div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center"><p class="font-black text-white italic uppercase">${s.customers?.name || 'Avulso'}</p><p class="text-xl font-black text-green-400 italic">R$ ${s.total.toFixed(2)}</p></div>`).join('');
         }
 
-        // --- AUX ---
         function updateDebtBadge() {
             const c = state.receivables.filter(r => r.status !== 'pago').length;
             const b = document.getElementById('debt-badge');
             if (b) { b.classList.toggle('hidden', c === 0); b.textContent = c; }
         }
 
-        sync();
+        // Auto-login do cache
+        const savedUser = localStorage.getItem('gestao_user');
+        if (savedUser) {
+            state.user = JSON.parse(savedUser);
+            document.getElementById('login-screen').classList.add('hidden');
+            applyPermissions();
+            sync();
+        }
     </script>
 </body>
 </html>
