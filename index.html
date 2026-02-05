@@ -38,12 +38,12 @@
 </head>
 <body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col lg:flex-row">
 
-    <!-- TELA DE LOGIN (SOBREPOSTA) -->
+    <!-- TELA DE LOGIN -->
     <div id="login-screen" class="fixed inset-0 bg-gray-900 z-[10000] flex items-center justify-center p-4">
         <div class="max-w-md w-full bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl">
             <div class="text-center mb-8">
                 <h1 class="text-4xl font-black text-white italic">GESTÃO</h1>
-                <p class="text-gray-400 mt-2">Acesso Restrito</p>
+                <p class="text-gray-400 mt-2">Acesso ao Sistema</p>
             </div>
             <form id="login-form" class="space-y-4">
                 <div>
@@ -55,6 +55,32 @@
                     <input type="password" id="login-password" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 mt-1 text-white outline-none focus:border-blue-500" required>
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl mt-4 transition transform active:scale-95 shadow-lg">ENTRAR</button>
+                <div class="flex justify-between text-xs font-bold mt-6 text-gray-400">
+                    <button type="button" onclick="showAuthModal('reset')" class="hover:text-blue-400 transition">Esqueci a senha</button>
+                    <button type="button" onclick="showAuthModal('reg')" class="hover:text-blue-400 transition">Não tenho cadastro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE CADASTRO / RECUPERAÇÃO -->
+    <div id="auth-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[10001]">
+        <div class="card w-full max-w-md shadow-2xl border-2 border-blue-500/20">
+            <h2 id="auth-modal-title" class="text-xl font-black text-white mb-6 italic uppercase tracking-widest">Ação</h2>
+            <form id="auth-modal-form" class="space-y-4">
+                <input type="hidden" id="auth-mode">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Usuário</label>
+                    <input type="text" id="auth-username" class="w-full bg-gray-800 border-2 border-gray-700 rounded-xl p-4 text-white outline-none focus:border-blue-500 transition" required>
+                </div>
+                <div>
+                    <label id="auth-pass-label" class="text-xs font-bold text-gray-500 uppercase block mb-1">Senha</label>
+                    <input type="password" id="auth-password" class="w-full bg-gray-800 border-2 border-gray-700 rounded-xl p-4 text-white outline-none focus:border-blue-500 transition" required>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeAuthModal()" class="flex-1 bg-gray-700 py-4 rounded-xl font-bold transition text-xs uppercase">Cancelar</button>
+                    <button type="submit" class="flex-[2] bg-blue-600 py-4 rounded-xl font-black uppercase text-xs">Confirmar</button>
+                </div>
             </form>
         </div>
     </div>
@@ -72,7 +98,7 @@
         <div class="mb-8 px-2 flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-black text-white italic">GESTÃO</h1>
-                <p class="text-blue-400 text-[10px] font-bold uppercase tracking-widest">Controle de Vendas</p>
+                <p class="text-blue-400 text-[10px] font-bold uppercase tracking-widest">Painel Administrativo</p>
             </div>
             <button onclick="toggleMenu()" class="lg:hidden text-gray-400 hover:text-white">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -103,7 +129,6 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 Relatórios
             </button>
-            <!-- MENU SÓ PARA GERENTE -->
             <button onclick="showTab('users')" id="tab-users" class="tab-button px-4 py-3 rounded-xl font-bold text-sm role-gerente">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 Usuários
@@ -156,11 +181,9 @@
                                 <option value="prazo" class="text-orange-400 font-bold">🕒 Venda a Prazo (Fiado)</option>
                             </select>
                         </div>
-                        <!-- Botão Finalizar: Escondido para 'usuario' -->
                         <button id="btn-finish-sale" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-2xl shadow-xl transition disabled:opacity-30 uppercase tracking-widest role-can-finish">Finalizar Venda</button>
                     </div>
                 </div>
-                <!-- Histórico: Escondido para 'usuario' -->
                 <div class="card role-can-see-history">
                     <h2 class="text-xl font-bold text-white border-b border-gray-700 pb-3 mb-4 italic uppercase">Histórico</h2>
                     <div id="sales-log" class="space-y-4 scroll-custom overflow-y-auto max-h-[600px]"></div>
@@ -183,8 +206,8 @@
                         <div class="flex gap-2"><button type="submit" class="flex-1 bg-blue-600 py-3 rounded-xl font-black">GUARDAR</button><button type="button" id="btn-cancel-prod" class="hidden bg-gray-600 px-4 rounded-xl">✖</button></div>
                     </form>
                 </div>
-                <div class="card lg:col-span-2">
-                    <input type="search" id="inv-search" placeholder="🔍 Filtrar..." class="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 mb-6 shadow-inner outline-none">
+                <div class="card lg:col-span-2 shadow-inner">
+                    <input type="search" id="inv-search" placeholder="🔍 Filtrar estoque..." class="w-full bg-gray-800 border border-gray-700 rounded-xl p-4 mb-6 shadow-inner outline-none">
                     <div id="inv-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 </div>
             </section>
@@ -192,26 +215,39 @@
             <!-- ABA FINANCEIRO -->
             <section id="view-finance" class="hidden"><div class="card"><h2 class="text-2xl font-black text-white italic uppercase mb-8">Contas a Receber</h2><div id="receivables-container" class="space-y-4"></div></div></section>
 
-            <!-- ABA USUÁRIOS (NOVO) -->
+            <!-- ABA USUÁRIOS -->
             <section id="view-users" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="card h-fit">
-                    <h2 class="text-xl font-bold text-white mb-6 italic uppercase">Novo Usuário</h2>
+                <div class="card h-fit shadow-2xl">
+                    <h2 id="user-form-title" class="text-xl font-bold text-white mb-6 italic uppercase">Novo Usuário</h2>
                     <form id="form-user" class="space-y-4">
-                        <input type="text" id="u-username" placeholder="Nome de Usuário" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required>
-                        <input type="password" id="u-password" placeholder="Senha" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required>
-                        <select id="u-role" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold">
-                            <option value="usuario">Usuário Comum (Só Vendas)</option>
-                            <option value="administrador">Administrador (Visualizador)</option>
-                            <option value="gerente">Gerente (Acesso Total)</option>
-                        </select>
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl mt-4">Criar Usuário</button>
+                        <input type="hidden" id="u-id">
+                        <div>
+                            <label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Usuário</label>
+                            <input type="text" id="u-username" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Senha</label>
+                            <input type="password" id="u-password" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold" required>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 font-bold uppercase ml-1">Cargo</label>
+                            <select id="u-role" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-4 font-bold">
+                                <option value="usuario">Usuário Comum (Só Vendas)</option>
+                                <option value="administrador">Administrador (Visualizador)</option>
+                                <option value="gerente">Gerente (Acesso Total)</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="submit" id="btn-save-user" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl mt-4 transition">CRIAR USUÁRIO</button>
+                            <button type="button" id="btn-cancel-user" onclick="resetUserForm()" class="hidden bg-gray-600 px-4 rounded-xl mt-4">✖</button>
+                        </div>
                     </form>
                 </div>
                 <div class="card lg:col-span-2">
                     <div id="user-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 </div>
             </section>
-            
+
             <!-- ABA CLIENTES/RELATÓRIOS -->
             <section id="view-customers" class="hidden"><div id="cust-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div></section>
             <section id="view-reports" class="hidden space-y-8"><div id="rep-summary"></div></section>
@@ -219,25 +255,13 @@
         </main>
     </div>
 
-    <!-- MODAL DO RECIBO -->
+    <!-- MODAIS -->
     <div id="receipt-modal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 z-[1000]">
         <div class="max-w-sm w-full flex flex-col items-center justify-center">
-            <div id="receipt-img-box" class="border-4 border-gray-800 rounded-2xl mb-8 overflow-hidden bg-white shadow-2xl"></div>
+            <div id="receipt-img-box" class="border-4 border-gray-800 rounded-2xl mb-8 overflow-hidden bg-white shadow-2xl mx-auto"></div>
             <div class="flex flex-col gap-3 w-full">
-                <button id="btn-receipt-share" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-black text-sm uppercase">Compartilhar Recibo</button>
+                <button id="btn-receipt-share" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-black text-sm uppercase">Compartilhar</button>
                 <button onclick="closeReceiptModal()" class="w-full bg-white/10 text-white py-3 rounded-xl font-bold text-xs uppercase">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL BAIXA FINANCEIRA -->
-    <div id="modal-payment" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999]">
-        <div class="card w-full max-w-md shadow-2xl border-2 border-blue-500/20">
-            <h2 class="text-xl font-black text-white mb-6 italic uppercase">Confirmar Recebimento</h2>
-            <input type="number" id="pay-input-amount" step="0.01" class="w-full bg-gray-800 border-2 border-gray-700 rounded-2xl p-5 text-4xl font-black text-green-400 outline-none focus:border-green-500 transition">
-            <div class="flex gap-4 mt-6">
-                <button onclick="closePaymentModal()" class="flex-1 bg-gray-700 py-4 rounded-xl font-bold transition text-xs">CANCELAR</button>
-                <button id="btn-pay-confirm" class="flex-[2] bg-green-600 py-4 rounded-xl font-black uppercase text-xs">Baixar</button>
             </div>
         </div>
     </div>
@@ -266,38 +290,83 @@
             }
         };
 
-        // --- AUTH LOGIC ---
+        // --- AUTH LOGIC (LOGIN / CADASTRO / RESET) ---
         document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
-            
             const { data, error } = await supabase.from('app_users').select('*').eq('username', username).eq('password', password).single();
-            
             if (data) {
-                state.user = data;
-                localStorage.setItem('gestao_user', JSON.stringify(data));
-                document.getElementById('login-screen').classList.add('hidden');
-                applyPermissions();
-                await sync();
+                loginSuccess(data);
             } else {
                 ui.notify("Dados Inválidos!", true);
             }
         };
+
+        function loginSuccess(userData) {
+            state.user = userData;
+            localStorage.setItem('gestao_user', JSON.stringify(userData));
+            document.getElementById('login-screen').classList.add('hidden');
+            applyPermissions();
+            sync();
+        }
 
         window.logout = () => {
             localStorage.removeItem('gestao_user');
             location.reload();
         };
 
+        window.showAuthModal = (mode) => {
+            const modal = document.getElementById('auth-modal');
+            const title = document.getElementById('auth-modal-title');
+            const modeInput = document.getElementById('auth-mode');
+            const passLabel = document.getElementById('auth-pass-label');
+            
+            modal.classList.remove('hidden');
+            modeInput.value = mode;
+            
+            if (mode === 'reg') {
+                title.textContent = "Novo Cadastro";
+                passLabel.textContent = "Nova Senha";
+            } else {
+                title.textContent = "Recuperar Senha";
+                passLabel.textContent = "Definir Nova Senha";
+            }
+        };
+
+        window.closeAuthModal = () => document.getElementById('auth-modal').classList.add('hidden');
+
+        document.getElementById('auth-modal-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const mode = document.getElementById('auth-mode').value;
+            const user = document.getElementById('auth-username').value;
+            const pass = document.getElementById('auth-password').value;
+
+            ui.loading(true);
+            try {
+                if (mode === 'reg') {
+                    // Cadastro de Usuário Final
+                    const { data, error } = await supabase.from('app_users').insert({ username: user, password: pass, role: 'usuario' }).select().single();
+                    if (error) throw error;
+                    ui.notify("✅ Cadastro realizado! Entre agora.");
+                } else {
+                    // Reset de Senha (Sem validação externa neste modelo simples)
+                    const { data, error } = await supabase.from('app_users').update({ password: pass }).eq('username', user).select().single();
+                    if (error || !data) throw new Error("Usuário não encontrado");
+                    ui.notify("✅ Senha atualizada!");
+                }
+                closeAuthModal();
+            } catch(err) {
+                ui.notify(err.message, true);
+            } finally {
+                ui.loading(false);
+            }
+        };
+
         function applyPermissions() {
             const role = state.user.role;
             document.getElementById('logged-user-name').textContent = state.user.username;
             document.getElementById('logged-user-role').textContent = role;
-
-            // Gerente vê tudo
-            // Admin vê tudo, mas não altera
-            // Usuario só vê vendas
 
             if (role === 'usuario') {
                 document.querySelectorAll('.role-admin, .role-gerente').forEach(el => el.classList.add('hidden'));
@@ -308,7 +377,75 @@
             }
         }
 
-        // --- NAVEGAÇÃO ---
+        // --- GESTÃO DE USUÁRIOS (GERENTE) ---
+        window.editUser = (id) => {
+            const u = state.users.find(x => x.id == id);
+            if (!u) return;
+            document.getElementById('u-id').value = u.id;
+            document.getElementById('u-username').value = u.username;
+            document.getElementById('u-password').value = u.password;
+            document.getElementById('u-role').value = u.role;
+            document.getElementById('user-form-title').textContent = "Editar Usuário";
+            document.getElementById('btn-save-user').textContent = "ATUALIZAR";
+            document.getElementById('btn-cancel-user').classList.remove('hidden');
+        };
+
+        window.resetUserForm = () => {
+            document.getElementById('u-id').value = '';
+            document.getElementById('form-user').reset();
+            document.getElementById('user-form-title').textContent = "Novo Usuário";
+            document.getElementById('btn-save-user').textContent = "CRIAR USUÁRIO";
+            document.getElementById('btn-cancel-user').classList.add('hidden');
+        };
+
+        document.getElementById('form-user').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('u-id').value;
+            const data = {
+                username: document.getElementById('u-username').value,
+                password: document.getElementById('u-password').value,
+                role: document.getElementById('u-role').value
+            };
+
+            ui.loading(true);
+            try {
+                if (id) {
+                    await supabase.from('app_users').update(data).eq('id', id);
+                    ui.notify("✅ Usuário atualizado");
+                } else {
+                    await supabase.from('app_users').insert(data);
+                    ui.notify("✅ Usuário criado");
+                }
+                resetUserForm();
+                syncUsers();
+            } catch(e) { ui.notify("Erro na operação", true); }
+            finally { ui.loading(false); }
+        };
+
+        async function syncUsers() {
+            const { data } = await supabase.from('app_users').select('*').order('username');
+            state.users = data || [];
+            document.getElementById('user-list').innerHTML = state.users.map(u => `
+                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 flex justify-between items-center group transition shadow-lg">
+                    <div>
+                        <p class="font-black text-white italic uppercase">${u.username}</p>
+                        <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">${u.role}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editUser(${u.id})" class="text-[9px] font-black text-gray-500 hover:text-white transition uppercase tracking-widest">Editar</button>
+                        <button onclick="deleteUser(${u.id})" class="text-[9px] font-black text-red-900 hover:text-red-500 transition uppercase tracking-widest">Apagar</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        window.deleteUser = async (id) => {
+            if (id === state.user.id) return ui.notify("Não pode apagar-se!", true);
+            if (!confirm("Tem certeza que deseja remover este acesso?")) return;
+            await supabase.from('app_users').delete().eq('id', id);
+            syncUsers();
+        };
+
+        // --- NAVEGAÇÃO / CORE ---
         window.toggleMenu = () => {
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
@@ -321,11 +458,11 @@
             document.getElementById(`view-${id}`).classList.remove('hidden');
             if (window.innerWidth < 1024) toggleMenu();
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('tab-active'));
-            document.getElementById(`tab-${id}`).classList.add('tab-active');
+            const activeBtn = document.getElementById(`tab-${id}`);
+            if (activeBtn) activeBtn.classList.add('tab-active');
             if(id === 'users' && state.user.role === 'gerente') syncUsers();
         };
 
-        // --- SINCRONIZAÇÃO TOTAL ---
         async function sync() {
             if (!state.user) return;
             ui.loading(true);
@@ -344,32 +481,6 @@
             } finally { ui.loading(false); }
         }
 
-        async function syncUsers() {
-            const { data } = await supabase.from('app_users').select('*').order('username');
-            state.users = data || [];
-            document.getElementById('user-list').innerHTML = state.users.map(u => `
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-center">
-                    <div><p class="font-black text-white">${u.username}</p><p class="text-xs text-blue-400 uppercase font-bold">${u.role}</p></div>
-                    <button onclick="deleteUser(${u.id})" class="text-red-500 font-black">APAGAR</button>
-                </div>`).join('');
-        }
-
-        document.getElementById('form-user').onsubmit = async (e) => {
-            e.preventDefault();
-            await supabase.from('app_users').insert({
-                username: document.getElementById('u-username').value,
-                password: document.getElementById('u-password').value,
-                role: document.getElementById('u-role').value
-            });
-            e.target.reset(); syncUsers(); ui.notify("Usuário Criado");
-        };
-
-        window.deleteUser = async (id) => {
-            if (id === state.user.id) return ui.notify("Não pode apagar-se!", true);
-            await supabase.from('app_users').delete().eq('id', id);
-            syncUsers();
-        };
-
         function render() {
             renderPDV();
             renderInventory();
@@ -378,11 +489,11 @@
             updateDebtBadge();
         }
 
-        // --- LOGICA PDV ---
+        // --- PDV / VENDAS ---
         function renderPDV() {
             const term = document.getElementById('sale-search-prod').value.toLowerCase();
             const list = state.products.filter(p => p.name.toLowerCase().includes(term));
-            document.getElementById('sale-prod-select').innerHTML = list.map(p => `<option value="${p.id}">${p.name} - R$ ${p.price.toFixed(2)} [${p.stock} un]</option>`).join('');
+            document.getElementById('sale-prod-select').innerHTML = list.map(p => `<option value="${p.id}">${p.name} - R$ ${p.price.toFixed(2)} [${p.stock}]</option>`).join('');
             document.getElementById('sale-cust-select').innerHTML = '<option value="">👤 CONSUMIDOR FINAL</option>' + state.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
         }
         document.getElementById('sale-search-prod').oninput = renderPDV;
@@ -409,7 +520,7 @@
             ui.loading(true);
             try {
                 const customerId = cid ? parseInt(cid) : null;
-                const { data: newSale, error } = await supabase.from('sales').insert([{ customer_id: customerId, total, payment_method: method, items: state.cart, status: 'ativa' }]).select().single();
+                const { data: newSale } = await supabase.from('sales').insert([{ customer_id: customerId, total, payment_method: method, items: state.cart, status: 'ativa' }]).select().single();
                 if (method === 'prazo') await supabase.from('accounts_receivable').insert([{ sale_id: newSale.id, customer_id: customerId, total_amount: total, paid_amount: 0, status: 'pendente' }]);
                 for (const item of state.cart) {
                     await supabase.from('products').update({ stock: item.stock - item.quantity }).eq('id', item.id);
@@ -435,11 +546,7 @@
             let total = 0;
             document.getElementById('receivables-container').innerHTML = active.map(r => {
                 const rest = r.total_amount - r.paid_amount; total += rest;
-                return `
-                <div class="bg-gray-800 p-6 rounded-2xl border-l-8 ${r.status === 'parcial' ? 'border-yellow-500' : 'border-red-600'} flex justify-between items-center">
-                    <div><h4 class="font-black text-white uppercase italic tracking-tighter">${r.customers?.name || 'Oculto'}</h4></div>
-                    <div class="flex items-center gap-4"><p class="text-2xl font-black text-red-500 italic">R$ ${rest.toFixed(2)}</p></div>
-                </div>`;
+                return `<div class="bg-gray-800 p-6 rounded-2xl border-l-8 ${r.status === 'parcial' ? 'border-yellow-500' : 'border-red-600'} flex justify-between items-center"><div><h4 class="font-black text-white uppercase italic tracking-tighter">${r.customers?.name || 'Oculto'}</h4></div><div class="flex items-center gap-4"><p class="text-2xl font-black text-red-500 italic">R$ ${rest.toFixed(2)}</p></div></div>`;
             }).join('');
             document.getElementById('total-pending-amount').textContent = `R$ ${total.toFixed(2)}`;
         }
